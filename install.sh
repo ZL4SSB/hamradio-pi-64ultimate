@@ -3,10 +3,10 @@
 #################################################
 # HamRadio-Pi-64-Ultimate
 # Simple Ham Radio Installer
-# Version 0.1
+# Version 0.2
 #################################################
 
-VERSION="0.1"
+VERSION="0.2"
 
 LOGFILE="$HOME/hamradio-install.log"
 
