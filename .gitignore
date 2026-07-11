@@ -1,0 +1,9 @@
+# HamRadio-Pi Ultimate local station data
+config/station.json
+config/settings.json
+config/favourites.json
+config/installed_apps.json
+config/rollback.json
+
+# Automatic update backups
+backups/

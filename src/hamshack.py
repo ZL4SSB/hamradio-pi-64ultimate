@@ -3,7 +3,7 @@
 """
 HamRadio-Pi Ultimate
 Main Dashboard
-Version 0.4.0
+Version 0.3.2
 """
 
 import json
@@ -15,15 +15,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from tkinter import messagebox, ttk
 
-from application_catalogue import ApplicationCatalogueWindow
-
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 STATION_FILE = PROJECT_DIR / "config" / "station.json"
 APPLICATION_FILE = PROJECT_DIR / "src" / "data" / "applications.json"
+VERSION_FILE = PROJECT_DIR / "config" / "version.json"
 WPSD_SCRIPT = PROJECT_DIR / "scripts" / "wpsd-card-builder.sh"
 STATION_WIZARD = PROJECT_DIR / "src" / "station_wizard.py"
 STATION_BUILDER = PROJECT_DIR / "src" / "station_builder.py"
+UPDATER = PROJECT_DIR / "src" / "updater.py"
 
 
 class HamRadioPiUltimate:
@@ -40,6 +40,13 @@ class HamRadioPiUltimate:
             APPLICATION_FILE,
             {"applications": []},
         )
+        self.version_info = self.load_json(
+            VERSION_FILE,
+            {
+                "version": "Unknown",
+                "edition": "Community",
+            },
+        )
 
         self.callsign_value = tk.StringVar()
         self.grid_value = tk.StringVar()
@@ -55,8 +62,11 @@ class HamRadioPiUltimate:
 
     @staticmethod
     def load_json(path: Path, default: dict) -> dict:
+        """Load a JSON file, returning a default value on failure."""
+
         if not path.exists():
             return default
+
         try:
             with path.open("r", encoding="utf-8") as file:
                 return json.load(file)
@@ -64,6 +74,8 @@ class HamRadioPiUltimate:
             return default
 
     def build_interface(self) -> None:
+        """Build the main dashboard."""
+
         main = ttk.Frame(self.root, padding=18)
         main.pack(fill="both", expand=True)
 
@@ -91,43 +103,118 @@ class HamRadioPiUltimate:
         self.build_information_panel(content)
         self.build_tools_panel(content)
 
+        version = self.version_info.get("version", "Unknown")
+        edition = self.version_info.get("edition", "Community")
+
         ttk.Label(
             main,
-            text="HamRadio-Pi Ultimate Community Edition — Version 0.4.0",
+            text=(
+                f"HamRadio-Pi Ultimate {edition} Edition "
+                f"— Version {version}"
+            ),
             font=("Arial", 9),
         ).pack(pady=(12, 0))
 
     def build_station_panel(self, parent: ttk.Frame) -> None:
-        panel = ttk.LabelFrame(parent, text="Station", padding=15)
-        panel.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
+        """Create station identity and time information."""
 
-        self.add_status_row(panel, 0, "Callsign", self.callsign_value)
-        self.add_status_row(panel, 1, "Grid", self.grid_value)
-        self.add_status_row(panel, 2, "Station Type", self.station_type_value)
-        self.add_status_row(panel, 3, "Current UTC", self.utc_time_value)
-        self.add_status_row(panel, 4, "Local Time", self.local_time_value)
+        panel = ttk.LabelFrame(
+            parent,
+            text="Station",
+            padding=15,
+        )
+        panel.grid(
+            row=0,
+            column=0,
+            padx=8,
+            pady=8,
+            sticky="nsew",
+        )
+
+        self.add_status_row(
+            panel,
+            0,
+            "Callsign",
+            self.callsign_value,
+        )
+        self.add_status_row(
+            panel,
+            1,
+            "Grid",
+            self.grid_value,
+        )
+        self.add_status_row(
+            panel,
+            2,
+            "Station Type",
+            self.station_type_value,
+        )
+        self.add_status_row(
+            panel,
+            3,
+            "Current UTC",
+            self.utc_time_value,
+        )
+        self.add_status_row(
+            panel,
+            4,
+            "Local Time",
+            self.local_time_value,
+        )
 
         ttk.Button(
             panel,
             text="Edit Station Profile",
             command=self.open_station_wizard,
-        ).grid(row=5, column=0, columnspan=2, sticky="ew", pady=(18, 0))
+        ).grid(
+            row=5,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            pady=(18, 0),
+        )
 
         panel.columnconfigure(1, weight=1)
 
     def build_status_panel(self, parent: ttk.Frame) -> None:
-        panel = ttk.LabelFrame(parent, text="Station Status", padding=15)
-        panel.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
+        """Create status information for the current station."""
 
-        ttk.Label(panel, text="Station Health", font=("Arial", 11, "bold")).grid(
-            row=0, column=0, sticky="w", pady=6
+        panel = ttk.LabelFrame(
+            parent,
+            text="Station Status",
+            padding=15,
         )
-        ttk.Label(panel, text="Not checked").grid(
-            row=0, column=1, sticky="e", pady=6
+        panel.grid(
+            row=0,
+            column=1,
+            padx=8,
+            pady=8,
+            sticky="nsew",
         )
 
-        self.add_status_row(panel, 1, "Connected Radio", self.radio_value)
-        self.add_status_row(panel, 2, "Connected SDR", self.sdr_value)
+        ttk.Label(
+            panel,
+            text="Station Health",
+            font=("Arial", 11, "bold"),
+        ).grid(row=0, column=0, sticky="w", pady=6)
+
+        ttk.Label(
+            panel,
+            text="Not checked",
+        ).grid(row=0, column=1, sticky="e", pady=6)
+
+        self.add_status_row(
+            panel,
+            1,
+            "Connected Radio",
+            self.radio_value,
+        )
+        self.add_status_row(
+            panel,
+            2,
+            "Connected SDR",
+            self.sdr_value,
+        )
 
         ttk.Label(
             panel,
@@ -143,35 +230,74 @@ class HamRadioPiUltimate:
         panel.columnconfigure(1, weight=1)
 
     def build_information_panel(self, parent: ttk.Frame) -> None:
-        panel = ttk.LabelFrame(parent, text="Radio Information", padding=15)
-        panel.grid(row=1, column=0, padx=8, pady=8, sticky="nsew")
+        """Create future live-information placeholders."""
+
+        panel = ttk.LabelFrame(
+            parent,
+            text="Radio Information",
+            padding=15,
+        )
+        panel.grid(
+            row=1,
+            column=0,
+            padx=8,
+            pady=8,
+            sticky="nsew",
+        )
 
         for row, item in enumerate(
-            ["Latest DX Cluster Spots", "Solar Conditions", "Propagation", "Weather"]
+            [
+                "Latest DX Cluster Spots",
+                "Solar Conditions",
+                "Propagation",
+                "Weather",
+            ]
         ):
             ttk.Label(
                 panel,
                 text=item,
                 font=("Arial", 11, "bold"),
-            ).grid(row=row, column=0, sticky="w", pady=8)
+            ).grid(
+                row=row,
+                column=0,
+                sticky="w",
+                pady=8,
+            )
 
             ttk.Label(
                 panel,
                 text="Coming soon",
-            ).grid(row=row, column=1, sticky="e", pady=8)
+            ).grid(
+                row=row,
+                column=1,
+                sticky="e",
+                pady=8,
+            )
 
         panel.columnconfigure(1, weight=1)
 
     def build_tools_panel(self, parent: ttk.Frame) -> None:
-        panel = ttk.LabelFrame(parent, text="Tools", padding=15)
-        panel.grid(row=1, column=1, padx=8, pady=8, sticky="nsew")
+        """Create the primary tool buttons."""
+
+        panel = ttk.LabelFrame(
+            parent,
+            text="Tools",
+            padding=15,
+        )
+        panel.grid(
+            row=1,
+            column=1,
+            padx=8,
+            pady=8,
+            sticky="nsew",
+        )
 
         buttons = [
-            ("Applications", self.open_application_catalogue),
+            ("Applications", self.show_applications),
             ("Build a Station", self.show_station_builder),
             ("WPSD SD Card Builder", self.open_wpsd_builder),
             ("Hardware", self.show_hardware),
-            ("Updates", self.show_updates),
+            ("Updates", self.open_updater),
             ("Settings", self.open_station_wizard),
         ]
 
@@ -192,18 +318,46 @@ class HamRadioPiUltimate:
         panel.columnconfigure(1, weight=1)
 
     @staticmethod
-    def add_status_row(parent, row, title, value) -> None:
-        ttk.Label(parent, text=title, font=("Arial", 11, "bold")).grid(
-            row=row, column=0, sticky="w", pady=6
+    def add_status_row(
+        parent: ttk.LabelFrame,
+        row: int,
+        title: str,
+        value: tk.StringVar,
+    ) -> None:
+        """Add a title and value row to a status panel."""
+
+        ttk.Label(
+            parent,
+            text=title,
+            font=("Arial", 11, "bold"),
+        ).grid(
+            row=row,
+            column=0,
+            sticky="w",
+            pady=6,
         )
-        ttk.Label(parent, textvariable=value).grid(
-            row=row, column=1, sticky="e", pady=6
+
+        ttk.Label(
+            parent,
+            textvariable=value,
+        ).grid(
+            row=row,
+            column=1,
+            sticky="e",
+            pady=6,
         )
 
     def refresh_station_information(self) -> None:
+        """Reload and display station information."""
+
         self.station = self.load_json(STATION_FILE, {})
-        self.callsign_value.set(self.station.get("callsign") or "Not configured")
-        self.grid_value.set(self.station.get("grid_square") or "Not configured")
+
+        self.callsign_value.set(
+            self.station.get("callsign") or "Not configured"
+        )
+        self.grid_value.set(
+            self.station.get("grid_square") or "Not configured"
+        )
         self.station_type_value.set(
             self.station.get("station_type") or "Not selected"
         )
@@ -215,6 +369,8 @@ class HamRadioPiUltimate:
         )
 
     def update_clocks(self) -> None:
+        """Update UTC and local clocks every second."""
+
         self.utc_time_value.set(
             datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
         )
@@ -223,28 +379,60 @@ class HamRadioPiUltimate:
         )
         self.root.after(1000, self.update_clocks)
 
-    def open_application_catalogue(self) -> None:
-        ApplicationCatalogueWindow(self.root)
+    def _run_python_tool(
+        self,
+        path: Path,
+        title: str,
+    ) -> None:
+        """Run another Python tool and report startup errors."""
 
-    def open_station_wizard(self) -> None:
-        self._run_python_tool(STATION_WIZARD, "Station Setup Wizard")
-        self.refresh_station_information()
-
-    def show_station_builder(self) -> None:
-        self._run_python_tool(STATION_BUILDER, "Station Builder")
-        self.refresh_station_information()
-
-    def _run_python_tool(self, path: Path, title: str) -> None:
         if not path.exists():
-            messagebox.showerror(title, f"{title} could not be found.")
+            messagebox.showerror(
+                title,
+                f"{title} could not be found.",
+            )
             return
 
         try:
-            subprocess.run([sys.executable, str(path)], check=False)
+            subprocess.run(
+                [sys.executable, str(path)],
+                check=False,
+            )
         except OSError as error:
-            messagebox.showerror(title, f"{title} could not start:\n{error}")
+            messagebox.showerror(
+                title,
+                f"{title} could not start:\n{error}",
+            )
+
+    def open_station_wizard(self) -> None:
+        """Open the station setup wizard."""
+
+        self._run_python_tool(
+            STATION_WIZARD,
+            "Station Setup Wizard",
+        )
+        self.refresh_station_information()
+
+    def show_station_builder(self) -> None:
+        """Open the Station Builder."""
+
+        self._run_python_tool(
+            STATION_BUILDER,
+            "Station Builder",
+        )
+        self.refresh_station_information()
+
+    def open_updater(self) -> None:
+        """Open the Update Manager."""
+
+        self._run_python_tool(
+            UPDATER,
+            "Update Manager",
+        )
 
     def open_wpsd_builder(self) -> None:
+        """Open the Linux WPSD SD Card Builder."""
+
         if platform.system() != "Linux":
             messagebox.showinfo(
                 "WPSD SD Card Builder",
@@ -260,29 +448,44 @@ class HamRadioPiUltimate:
             return
 
         try:
-            subprocess.Popen(["bash", str(WPSD_SCRIPT)])
+            subprocess.Popen(
+                ["bash", str(WPSD_SCRIPT)],
+            )
         except OSError as error:
             messagebox.showerror(
                 "WPSD SD Card Builder",
                 f"The WPSD builder could not start:\n{error}",
             )
 
+    def show_applications(self) -> None:
+        """Show applications currently stored in the catalogue."""
+
+        names = "\n".join(
+            f"• {application.get('name', 'Unknown')}"
+            for application in self.catalogue.get(
+                "applications",
+                [],
+            )
+        )
+
+        messagebox.showinfo(
+            "Applications",
+            names or "No applications are currently listed.",
+        )
+
     @staticmethod
     def show_hardware() -> None:
+        """Placeholder for hardware detection."""
+
         messagebox.showinfo(
             "Hardware",
             "Automatic hardware detection will be added soon.",
         )
 
-    @staticmethod
-    def show_updates() -> None:
-        messagebox.showinfo(
-            "Updates",
-            "The update manager will be added soon.",
-        )
-
 
 def main() -> None:
+    """Start HamRadio-Pi Ultimate."""
+
     root = tk.Tk()
     HamRadioPiUltimate(root)
     root.mainloop()
