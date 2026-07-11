@@ -1,41 +1,27 @@
-# HamRadio-Pi Ultimate
+# HamRadio-Pi Ultimate v0.4.0 — Modern UI Foundation
 
-HamRadio-Pi Ultimate aims to make Raspberry Pi amateur radio software easier to install, organise, configure, and maintain.
+Adds a dark modern dashboard, card-style panels, improved spacing and typography, accent buttons, and hover tooltips for every dashboard action.
 
-## Mission
+Replace or add:
 
-**One command. One wizard. One Ham Radio menu.**
+```text
+src/ui/__init__.py
+src/ui/theme.py
+src/ui/tooltip.py
+src/dashboard.py
+config/version.json
+```
 
-## Current development features
+Test:
 
-- Main station dashboard
-- Station setup wizard
-- Station Builder profiles
-- Application catalogue
-- Weather data-source settings
-- Git-based safe updater with backup and rollback
-- WPSD SD Card Builder for a separate MMDVM Raspberry Pi
-- Raspberry Pi OS system and storage checks
-
-## Run on Windows or Raspberry Pi OS
-
-```bash
+```powershell
 python src/app.py
 ```
 
-The compatibility launcher also works:
+Commit:
 
-```bash
-python src/hamshack.py
+```powershell
+git add src/ui src/dashboard.py config/version.json
+git commit -m "Add modern dashboard theme and tooltips"
+git push
 ```
-
-## Raspberry Pi installer
-
-```bash
-chmod +x install.sh
-./install.sh
-```
-
-## Project status
-
-This project is under active development and is not yet a stable release.
