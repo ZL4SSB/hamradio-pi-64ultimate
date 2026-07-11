@@ -1,6 +1,6 @@
 {
     "name": "HamRadio-Pi Ultimate",
-    "version": "0.3.4",
+    "version": "0.3.6",
     "edition": "Community",
     "update_channel": "development",
     "repository": "https://github.com/ZL4SSB/hamradio-pi-64ultimate"
