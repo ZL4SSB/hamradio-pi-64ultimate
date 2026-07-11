@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=WPSD SD Card Builder
+Comment=Prepare an SD card for a separate MMDVM hotspot using WPSD
+Exec=bash -lc '"$HOME/hamradio-pi-64ultimate/scripts/wpsd-card-builder.sh"'
+Icon=media-flash-sd-mmc
+Terminal=true
+Categories=HamRadio;Utility;
+Keywords=MMDVM;WPSD;hotspot;SD card;Raspberry Pi Imager;
