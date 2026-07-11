@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+HamRadio-Pi Ultimate
+Main Dashboard
+Version 0.4.0
+"""
+
 import json
 import platform
 import subprocess
@@ -8,6 +14,9 @@ import tkinter as tk
 from datetime import datetime, timezone
 from pathlib import Path
 from tkinter import messagebox, ttk
+
+from application_catalogue import ApplicationCatalogueWindow
+
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 STATION_FILE = PROJECT_DIR / "config" / "station.json"
@@ -18,6 +27,8 @@ STATION_BUILDER = PROJECT_DIR / "src" / "station_builder.py"
 
 
 class HamRadioPiUltimate:
+    """Main HamRadio-Pi Ultimate dashboard."""
+
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("HamRadio-Pi Ultimate")
@@ -25,7 +36,10 @@ class HamRadioPiUltimate:
         self.root.minsize(900, 620)
 
         self.station = self.load_json(STATION_FILE, {})
-        self.catalogue = self.load_json(APPLICATION_FILE, {"applications": []})
+        self.catalogue = self.load_json(
+            APPLICATION_FILE,
+            {"applications": []},
+        )
 
         self.callsign_value = tk.StringVar()
         self.grid_value = tk.StringVar()
@@ -53,7 +67,12 @@ class HamRadioPiUltimate:
         main = ttk.Frame(self.root, padding=18)
         main.pack(fill="both", expand=True)
 
-        ttk.Label(main, text="HamRadio-Pi Ultimate", font=("Arial", 26, "bold")).pack()
+        ttk.Label(
+            main,
+            text="HamRadio-Pi Ultimate",
+            font=("Arial", 26, "bold"),
+        ).pack()
+
         ttk.Label(
             main,
             text="Build your station, not your software list.",
@@ -74,7 +93,7 @@ class HamRadioPiUltimate:
 
         ttk.Label(
             main,
-            text="HamRadio-Pi Ultimate Community Edition — Version 0.3.1",
+            text="HamRadio-Pi Ultimate Community Edition — Version 0.4.0",
             font=("Arial", 9),
         ).pack(pady=(12, 0))
 
@@ -115,6 +134,7 @@ class HamRadioPiUltimate:
             text="Catalogue Applications",
             font=("Arial", 11, "bold"),
         ).grid(row=3, column=0, sticky="w", pady=6)
+
         ttk.Label(
             panel,
             text=str(len(self.catalogue.get("applications", []))),
@@ -129,12 +149,16 @@ class HamRadioPiUltimate:
         for row, item in enumerate(
             ["Latest DX Cluster Spots", "Solar Conditions", "Propagation", "Weather"]
         ):
-            ttk.Label(panel, text=item, font=("Arial", 11, "bold")).grid(
-                row=row, column=0, sticky="w", pady=8
-            )
-            ttk.Label(panel, text="Coming soon").grid(
-                row=row, column=1, sticky="e", pady=8
-            )
+            ttk.Label(
+                panel,
+                text=item,
+                font=("Arial", 11, "bold"),
+            ).grid(row=row, column=0, sticky="w", pady=8)
+
+            ttk.Label(
+                panel,
+                text="Coming soon",
+            ).grid(row=row, column=1, sticky="e", pady=8)
 
         panel.columnconfigure(1, weight=1)
 
@@ -143,7 +167,7 @@ class HamRadioPiUltimate:
         panel.grid(row=1, column=1, padx=8, pady=8, sticky="nsew")
 
         buttons = [
-            ("Applications", self.show_applications),
+            ("Applications", self.open_application_catalogue),
             ("Build a Station", self.show_station_builder),
             ("WPSD SD Card Builder", self.open_wpsd_builder),
             ("Hardware", self.show_hardware),
@@ -152,7 +176,11 @@ class HamRadioPiUltimate:
         ]
 
         for index, (text, command) in enumerate(buttons):
-            ttk.Button(panel, text=text, command=command).grid(
+            ttk.Button(
+                panel,
+                text=text,
+                command=command,
+            ).grid(
                 row=index // 2,
                 column=index % 2,
                 sticky="ew",
@@ -195,6 +223,9 @@ class HamRadioPiUltimate:
         )
         self.root.after(1000, self.update_clocks)
 
+    def open_application_catalogue(self) -> None:
+        ApplicationCatalogueWindow(self.root)
+
     def open_station_wizard(self) -> None:
         self._run_python_tool(STATION_WIZARD, "Station Setup Wizard")
         self.refresh_station_information()
@@ -207,6 +238,7 @@ class HamRadioPiUltimate:
         if not path.exists():
             messagebox.showerror(title, f"{title} could not be found.")
             return
+
         try:
             subprocess.run([sys.executable, str(path)], check=False)
         except OSError as error:
@@ -219,23 +251,21 @@ class HamRadioPiUltimate:
                 "The WPSD SD Card Builder runs on Raspberry Pi OS.",
             )
             return
+
         if not WPSD_SCRIPT.exists():
             messagebox.showerror(
                 "WPSD SD Card Builder",
                 "The WPSD builder script could not be found.",
             )
             return
-        subprocess.Popen(["bash", str(WPSD_SCRIPT)])
 
-    def show_applications(self) -> None:
-        names = "\n".join(
-            f"• {app.get('name', 'Unknown')}"
-            for app in self.catalogue.get("applications", [])
-        )
-        messagebox.showinfo(
-            "Applications",
-            names or "No applications are currently listed.",
-        )
+        try:
+            subprocess.Popen(["bash", str(WPSD_SCRIPT)])
+        except OSError as error:
+            messagebox.showerror(
+                "WPSD SD Card Builder",
+                f"The WPSD builder could not start:\n{error}",
+            )
 
     @staticmethod
     def show_hardware() -> None:
