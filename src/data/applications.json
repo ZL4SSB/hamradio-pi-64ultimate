@@ -1,0 +1,58 @@
+{
+  "applications": [
+    {
+      "name": "WSJT-X",
+      "package": "wsjtx",
+      "category": "Digital Modes",
+      "activity": "FT8",
+      "recommended": true,
+      "gui": true,
+      "description": "Weak signal digital communication."
+    },
+    {
+      "name": "JS8Call",
+      "package": "js8call",
+      "category": "Digital Modes",
+      "activity": "Keyboard Chat",
+      "recommended": true,
+      "gui": true,
+      "description": "Keyboard messaging using the FT8 waveform."
+    },
+    {
+      "name": "FLDIGI",
+      "package": "fldigi",
+      "category": "Digital Modes",
+      "activity": "RTTY / PSK",
+      "recommended": true,
+      "gui": true,
+      "description": "Multi-mode digital communications."
+    },
+    {
+      "name": "GQRX",
+      "package": "gqrx-sdr",
+      "category": "SDR",
+      "activity": "Software Defined Radio",
+      "recommended": true,
+      "gui": true,
+      "description": "SDR receiver."
+    },
+    {
+      "name": "Gpredict",
+      "package": "gpredict",
+      "category": "Satellite",
+      "activity": "Satellite Tracking",
+      "recommended": true,
+      "gui": true,
+      "description": "Satellite tracking and Doppler prediction."
+    },
+    {
+      "name": "CHIRP",
+      "package": "chirp",
+      "category": "Programming",
+      "activity": "Radio Programming",
+      "recommended": true,
+      "gui": true,
+      "description": "Program amateur radios."
+    }
+  ]
+}
