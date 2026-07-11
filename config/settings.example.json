@@ -1,0 +1,11 @@
+{
+    "weather": {
+        "provider": "Open-Meteo",
+        "use_station_grid": true,
+        "grid_square": "",
+        "latitude": "",
+        "longitude": "",
+        "api_key": "",
+        "refresh_minutes": 20
+    }
+}

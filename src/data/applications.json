@@ -3,112 +3,56 @@
     {
       "name": "WSJT-X",
       "package": "wsjtx",
-      "command": "wsjtx",
       "category": "Digital Modes",
-      "activity": "FT8, FT4 and weak-signal modes",
+      "activity": "FT8 / FT4",
       "recommended": true,
       "gui": true,
-      "description": "Weak-signal digital communications including FT8, FT4, JT65 and Q65."
+      "description": "Weak-signal digital communication."
     },
     {
       "name": "JS8Call",
       "package": "js8call",
-      "command": "js8call",
       "category": "Digital Modes",
-      "activity": "Keyboard messaging",
+      "activity": "Keyboard Chat",
       "recommended": true,
       "gui": true,
-      "description": "Keyboard messaging and store-and-forward communication using the JS8 waveform."
+      "description": "Keyboard messaging using the JS8 waveform."
     },
     {
       "name": "FLDIGI",
       "package": "fldigi",
-      "command": "fldigi",
       "category": "Digital Modes",
-      "activity": "RTTY, PSK and many other modes",
+      "activity": "RTTY / PSK",
       "recommended": true,
       "gui": true,
-      "description": "A multi-mode digital communications application."
-    },
-    {
-      "name": "FLRIG",
-      "package": "flrig",
-      "command": "flrig",
-      "category": "Rig Control",
-      "activity": "Radio control",
-      "recommended": true,
-      "gui": true,
-      "description": "A graphical radio-control application that works with FLDIGI and other software."
+      "description": "Multi-mode digital communications."
     },
     {
       "name": "GQRX",
       "package": "gqrx-sdr",
-      "command": "gqrx",
       "category": "SDR",
-      "activity": "Software-defined radio receiver",
+      "activity": "Software Defined Radio",
       "recommended": true,
       "gui": true,
-      "description": "A graphical SDR receiver based on GNU Radio and Qt."
-    },
-    {
-      "name": "GNU Radio Companion",
-      "package": "gnuradio",
-      "command": "gnuradio-companion",
-      "category": "SDR",
-      "activity": "Signal processing development",
-      "recommended": false,
-      "gui": true,
-      "description": "A graphical environment for building software-defined radio flowgraphs."
+      "description": "Software-defined radio receiver."
     },
     {
       "name": "Gpredict",
       "package": "gpredict",
-      "command": "gpredict",
       "category": "Satellite",
-      "activity": "Satellite tracking",
+      "activity": "Satellite Tracking",
       "recommended": true,
       "gui": true,
-      "description": "Real-time satellite tracking and orbit prediction."
+      "description": "Satellite tracking and Doppler prediction."
     },
     {
       "name": "CHIRP",
       "package": "chirp",
-      "command": "chirp",
-      "category": "Radio Programming",
-      "activity": "Radio memory programming",
+      "category": "Programming",
+      "activity": "Radio Programming",
       "recommended": true,
       "gui": true,
-      "description": "Program memories and settings on many amateur radios."
-    },
-    {
-      "name": "Direwolf",
-      "package": "direwolf",
-      "command": "direwolf",
-      "category": "APRS and Packet",
-      "activity": "Software TNC and APRS",
-      "recommended": true,
-      "gui": false,
-      "description": "A software TNC, APRS modem, digipeater and Internet gateway."
-    },
-    {
-      "name": "Xastir",
-      "package": "xastir",
-      "command": "xastir",
-      "category": "APRS and Packet",
-      "activity": "APRS mapping",
-      "recommended": true,
-      "gui": true,
-      "description": "An APRS mapping and station-tracking application."
-    },
-    {
-      "name": "CQRLOG",
-      "package": "cqrlog",
-      "command": "cqrlog",
-      "category": "Logging",
-      "activity": "General station logging",
-      "recommended": true,
-      "gui": true,
-      "description": "A full-featured amateur-radio logging application."
+      "description": "Program supported amateur radios."
     }
   ]
 }

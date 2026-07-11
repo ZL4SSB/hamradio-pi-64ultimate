@@ -1,1 +1,1 @@
-"""HamRadio-Pi Ultimate services package."""
+"""HamRadio-Pi Ultimate service modules."""

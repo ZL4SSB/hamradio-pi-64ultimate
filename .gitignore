@@ -1,24 +1,32 @@
-# -------------------------
-# HamRadio-Pi Ultimate
-# Local user data
-# -------------------------
-
-config/station.json
-
-
-# Backup folders
-backups/
-
-# Python cache
+# Python
 __pycache__/
 *.pyc
+*.pyo
 
 # VS Code
 .vscode/
 
-# macOS
-.DS_Store
+# Logs and backups
+logs/*.log
+backups/
 
-# Windows
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# OS files
+.DS_Store
 Thumbs.db
 desktop.ini
+
+# Virtual environments
+.venv/
+venv/
+
+# Local personal station data
+config/station.json
+config/settings.json
+config/favourites.json
+config/installed_apps.json
+config/rollback.json

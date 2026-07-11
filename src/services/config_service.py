@@ -1,4 +1,4 @@
-"""JSON configuration services for HamRadio-Pi Ultimate."""
+"""JSON configuration services."""
 
 from __future__ import annotations
 
@@ -11,12 +11,7 @@ class ConfigService:
     """Load and save JSON configuration files safely."""
 
     @staticmethod
-    def load_json(
-        path: Path,
-        default: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Load JSON data or return a copy of the supplied default."""
-
+    def load_json(path: Path, default: dict[str, Any]) -> dict[str, Any]:
         if not path.exists():
             return dict(default)
 
@@ -26,23 +21,15 @@ class ConfigService:
         except (OSError, json.JSONDecodeError):
             return dict(default)
 
-        if not isinstance(data, dict):
-            return dict(default)
-
-        return data
+        return data if isinstance(data, dict) else dict(default)
 
     @staticmethod
-    def save_json(
-        path: Path,
-        data: dict[str, Any],
-    ) -> None:
-        """Write JSON data using an atomic temporary file."""
-
+    def save_json(path: Path, data: dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        temporary_path = path.with_suffix(path.suffix + ".tmp")
+        temporary = path.with_suffix(path.suffix + ".tmp")
 
-        with temporary_path.open("w", encoding="utf-8") as file:
+        with temporary.open("w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
             file.write("\n")
 
-        temporary_path.replace(path)
+        temporary.replace(path)

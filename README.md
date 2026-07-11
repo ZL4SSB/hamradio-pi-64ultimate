@@ -1,66 +1,41 @@
-# HamRadio-Pi-64-Ultimate
+# HamRadio-Pi Ultimate
 
-An easy-to-use amateur radio software installer for Raspberry Pi.
+HamRadio-Pi Ultimate aims to make Raspberry Pi amateur radio software easier to install, organise, configure, and maintain.
 
-## Purpose
+## Mission
 
-HamRadio-Pi-64-Ultimate installs a complete amateur radio environment on Raspberry Pi OS 64-bit.
+**One command. One wizard. One Ham Radio menu.**
 
-The goal is to make setting up a Raspberry Pi ham station simple for beginners.
+## Current development features
 
-## Supported Hardware
+- Main station dashboard
+- Station setup wizard
+- Station Builder profiles
+- Application catalogue
+- Weather data-source settings
+- Git-based safe updater with backup and rollback
+- WPSD SD Card Builder for a separate MMDVM Raspberry Pi
+- Raspberry Pi OS system and storage checks
 
-- Raspberry Pi 400
-- Raspberry Pi 4
-- Raspberry Pi 5
-- Raspberry Pi 3 (limited)
+## Run on Windows or Raspberry Pi OS
 
-## Supported Operating System
+```bash
+python src/app.py
+```
 
-- Raspberry Pi OS 64-bit Trixie
+The compatibility launcher also works:
 
-## Planned Features
+```bash
+python src/hamshack.py
+```
 
-### Digital Modes
+## Raspberry Pi installer
 
-- WSJT-X
-- JS8Call
-- FLDIGI
-- FLRIG
-- FreeDV
+```bash
+chmod +x install.sh
+./install.sh
+```
 
-### SDR
+## Project status
 
-- SDR++
-- GQRX
-- GNU Radio
-- RTL-SDR tools
-
-### APRS
-
-- Direwolf
-- Xastir
-
-### Logging
-
-- CQRLOG
-- XLOG
-
-### Satellite
-
-- Gpredict
-
-### Radio Programming
-
-- CHIRP
-
-### Optional Server Features
-
-- OpenWebRX
-- SDR servers
-- Streaming tools
-
-## Installation
-
-Clone the repository:
-
+This project is under active development and is not yet a stable release.
