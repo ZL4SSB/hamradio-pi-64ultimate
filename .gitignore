@@ -1,9 +1,24 @@
-# HamRadio-Pi Ultimate local station data
-config/station.json
-config/settings.json
-config/favourites.json
-config/installed_apps.json
-config/rollback.json
+# -------------------------
+# HamRadio-Pi Ultimate
+# Local user data
+# -------------------------
 
-# Automatic update backups
+config/station.json
+
+
+# Backup folders
 backups/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini

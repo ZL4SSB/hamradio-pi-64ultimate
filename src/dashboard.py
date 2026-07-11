@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
-"""
-HamRadio-Pi Ultimate
-Main Dashboard
-Version 0.3.2
-"""
+"""Main dashboard for HamRadio-Pi Ultimate."""
 
-import json
+from __future__ import annotations
+
 import platform
 import subprocess
 import sys
@@ -15,11 +12,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from tkinter import messagebox, ttk
 
+from services.config_service import ConfigService
+
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 STATION_FILE = PROJECT_DIR / "config" / "station.json"
 APPLICATION_FILE = PROJECT_DIR / "src" / "data" / "applications.json"
 VERSION_FILE = PROJECT_DIR / "config" / "version.json"
+
 WPSD_SCRIPT = PROJECT_DIR / "scripts" / "wpsd-card-builder.sh"
 STATION_WIZARD = PROJECT_DIR / "src" / "station_wizard.py"
 STATION_BUILDER = PROJECT_DIR / "src" / "station_builder.py"
@@ -27,7 +27,7 @@ UPDATER = PROJECT_DIR / "src" / "updater.py"
 
 
 class HamRadioPiUltimate:
-    """Main HamRadio-Pi Ultimate dashboard."""
+    """Main HamRadio-Pi Ultimate dashboard window."""
 
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
@@ -35,15 +35,18 @@ class HamRadioPiUltimate:
         self.root.geometry("1050x720")
         self.root.minsize(900, 620)
 
-        self.station = self.load_json(STATION_FILE, {})
-        self.catalogue = self.load_json(
+        self.station = ConfigService.load_json(
+            STATION_FILE,
+            {},
+        )
+        self.catalogue = ConfigService.load_json(
             APPLICATION_FILE,
             {"applications": []},
         )
-        self.version_info = self.load_json(
+        self.version_info = ConfigService.load_json(
             VERSION_FILE,
             {
-                "version": "Unknown",
+                "version": "0.3.3",
                 "edition": "Community",
             },
         )
@@ -60,39 +63,17 @@ class HamRadioPiUltimate:
         self.refresh_station_information()
         self.update_clocks()
 
-    @staticmethod
-    def load_json(path: Path, default: dict) -> dict:
-        """Load a JSON file, returning a default value on failure."""
-
-        if not path.exists():
-            return default
-
-        try:
-            with path.open("r", encoding="utf-8") as file:
-                return json.load(file)
-        except (OSError, json.JSONDecodeError):
-            return default
-
     def build_interface(self) -> None:
-        """Build the main dashboard."""
+        """Build the complete dashboard."""
 
         main = ttk.Frame(self.root, padding=18)
         main.pack(fill="both", expand=True)
 
-        ttk.Label(
-            main,
-            text="HamRadio-Pi Ultimate",
-            font=("Arial", 26, "bold"),
-        ).pack()
-
-        ttk.Label(
-            main,
-            text="Build your station, not your software list.",
-            font=("Arial", 11),
-        ).pack(pady=(3, 15))
+        self.build_header(main)
 
         content = ttk.Frame(main)
         content.pack(fill="both", expand=True)
+
         content.columnconfigure(0, weight=1)
         content.columnconfigure(1, weight=1)
         content.rowconfigure(0, weight=1)
@@ -102,12 +83,31 @@ class HamRadioPiUltimate:
         self.build_status_panel(content)
         self.build_information_panel(content)
         self.build_tools_panel(content)
+        self.build_footer(main)
+
+    def build_header(self, parent: ttk.Frame) -> None:
+        """Create the application heading."""
+
+        ttk.Label(
+            parent,
+            text="HamRadio-Pi Ultimate",
+            font=("Arial", 26, "bold"),
+        ).pack()
+
+        ttk.Label(
+            parent,
+            text="Build your station, not your software list.",
+            font=("Arial", 11),
+        ).pack(pady=(3, 15))
+
+    def build_footer(self, parent: ttk.Frame) -> None:
+        """Create the application version footer."""
 
         version = self.version_info.get("version", "Unknown")
         edition = self.version_info.get("edition", "Community")
 
         ttk.Label(
-            main,
+            parent,
             text=(
                 f"HamRadio-Pi Ultimate {edition} Edition "
                 f"— Version {version}"
@@ -177,7 +177,7 @@ class HamRadioPiUltimate:
         panel.columnconfigure(1, weight=1)
 
     def build_status_panel(self, parent: ttk.Frame) -> None:
-        """Create status information for the current station."""
+        """Create station and catalogue status information."""
 
         panel = ttk.LabelFrame(
             parent,
@@ -196,12 +196,22 @@ class HamRadioPiUltimate:
             panel,
             text="Station Health",
             font=("Arial", 11, "bold"),
-        ).grid(row=0, column=0, sticky="w", pady=6)
+        ).grid(
+            row=0,
+            column=0,
+            sticky="w",
+            pady=6,
+        )
 
         ttk.Label(
             panel,
             text="Not checked",
-        ).grid(row=0, column=1, sticky="e", pady=6)
+        ).grid(
+            row=0,
+            column=1,
+            sticky="e",
+            pady=6,
+        )
 
         self.add_status_row(
             panel,
@@ -216,21 +226,38 @@ class HamRadioPiUltimate:
             self.sdr_value,
         )
 
+        applications = self.catalogue.get("applications", [])
+        application_count = (
+            len(applications)
+            if isinstance(applications, list)
+            else 0
+        )
+
         ttk.Label(
             panel,
             text="Catalogue Applications",
             font=("Arial", 11, "bold"),
-        ).grid(row=3, column=0, sticky="w", pady=6)
+        ).grid(
+            row=3,
+            column=0,
+            sticky="w",
+            pady=6,
+        )
 
         ttk.Label(
             panel,
-            text=str(len(self.catalogue.get("applications", []))),
-        ).grid(row=3, column=1, sticky="e", pady=6)
+            text=str(application_count),
+        ).grid(
+            row=3,
+            column=1,
+            sticky="e",
+            pady=6,
+        )
 
         panel.columnconfigure(1, weight=1)
 
     def build_information_panel(self, parent: ttk.Frame) -> None:
-        """Create future live-information placeholders."""
+        """Create placeholders for live radio information."""
 
         panel = ttk.LabelFrame(
             parent,
@@ -245,14 +272,14 @@ class HamRadioPiUltimate:
             sticky="nsew",
         )
 
-        for row, item in enumerate(
-            [
-                "Latest DX Cluster Spots",
-                "Solar Conditions",
-                "Propagation",
-                "Weather",
-            ]
-        ):
+        information_items = [
+            "Latest DX Cluster Spots",
+            "Solar Conditions",
+            "Propagation",
+            "Weather",
+        ]
+
+        for row, item in enumerate(information_items):
             ttk.Label(
                 panel,
                 text=item,
@@ -277,7 +304,7 @@ class HamRadioPiUltimate:
         panel.columnconfigure(1, weight=1)
 
     def build_tools_panel(self, parent: ttk.Frame) -> None:
-        """Create the primary tool buttons."""
+        """Create the main tool buttons."""
 
         panel = ttk.LabelFrame(
             parent,
@@ -324,7 +351,7 @@ class HamRadioPiUltimate:
         title: str,
         value: tk.StringVar,
     ) -> None:
-        """Add a title and value row to a status panel."""
+        """Add one labelled status row."""
 
         ttk.Label(
             parent,
@@ -348,9 +375,12 @@ class HamRadioPiUltimate:
         )
 
     def refresh_station_information(self) -> None:
-        """Reload and display station information."""
+        """Reload and display current station information."""
 
-        self.station = self.load_json(STATION_FILE, {})
+        self.station = ConfigService.load_json(
+            STATION_FILE,
+            {},
+        )
 
         self.callsign_value.set(
             self.station.get("callsign") or "Not configured"
@@ -369,22 +399,30 @@ class HamRadioPiUltimate:
         )
 
     def update_clocks(self) -> None:
-        """Update UTC and local clocks every second."""
+        """Update local and UTC clocks once per second."""
 
         self.utc_time_value.set(
-            datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
+            datetime.now(timezone.utc).strftime(
+                "%H:%M:%S UTC"
+            )
         )
         self.local_time_value.set(
-            datetime.now().astimezone().strftime("%H:%M:%S")
+            datetime.now().astimezone().strftime(
+                "%H:%M:%S"
+            )
         )
-        self.root.after(1000, self.update_clocks)
 
-    def _run_python_tool(
+        self.root.after(
+            1000,
+            self.update_clocks,
+        )
+
+    def run_python_tool(
         self,
         path: Path,
         title: str,
     ) -> None:
-        """Run another Python tool and report startup errors."""
+        """Run another project Python tool."""
 
         if not path.exists():
             messagebox.showerror(
@@ -405,9 +443,9 @@ class HamRadioPiUltimate:
             )
 
     def open_station_wizard(self) -> None:
-        """Open the station setup wizard."""
+        """Open station profile setup."""
 
-        self._run_python_tool(
+        self.run_python_tool(
             STATION_WIZARD,
             "Station Setup Wizard",
         )
@@ -416,7 +454,7 @@ class HamRadioPiUltimate:
     def show_station_builder(self) -> None:
         """Open the Station Builder."""
 
-        self._run_python_tool(
+        self.run_python_tool(
             STATION_BUILDER,
             "Station Builder",
         )
@@ -425,7 +463,7 @@ class HamRadioPiUltimate:
     def open_updater(self) -> None:
         """Open the Update Manager."""
 
-        self._run_python_tool(
+        self.run_python_tool(
             UPDATER,
             "Update Manager",
         )
@@ -458,14 +496,20 @@ class HamRadioPiUltimate:
             )
 
     def show_applications(self) -> None:
-        """Show applications currently stored in the catalogue."""
+        """Show current application catalogue entries."""
+
+        applications = self.catalogue.get(
+            "applications",
+            [],
+        )
+
+        if not isinstance(applications, list):
+            applications = []
 
         names = "\n".join(
             f"• {application.get('name', 'Unknown')}"
-            for application in self.catalogue.get(
-                "applications",
-                [],
-            )
+            for application in applications
+            if isinstance(application, dict)
         )
 
         messagebox.showinfo(
@@ -475,21 +519,9 @@ class HamRadioPiUltimate:
 
     @staticmethod
     def show_hardware() -> None:
-        """Placeholder for hardware detection."""
+        """Show the future hardware-detection placeholder."""
 
         messagebox.showinfo(
             "Hardware",
             "Automatic hardware detection will be added soon.",
         )
-
-
-def main() -> None:
-    """Start HamRadio-Pi Ultimate."""
-
-    root = tk.Tk()
-    HamRadioPiUltimate(root)
-    root.mainloop()
-
-
-if __name__ == "__main__":
-    main()
