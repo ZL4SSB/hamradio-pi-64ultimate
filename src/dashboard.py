@@ -49,10 +49,7 @@ class HamRadioPiUltimate:
         )
         self.version_info = ConfigService.load_json(
             VERSION_FILE,
-            {
-                "version": "0.3.6",
-                "edition": "Community",
-            },
+            {"version": "0.3.7c", "edition": "Community"},
         )
 
         self.callsign_value = tk.StringVar()
@@ -115,17 +112,8 @@ class HamRadioPiUltimate:
         ).pack(pady=(12, 0))
 
     @staticmethod
-    def panel(
-        parent: ttk.Frame,
-        title: str,
-        row: int,
-        column: int,
-    ) -> ttk.LabelFrame:
-        panel = ttk.LabelFrame(
-            parent,
-            text=title,
-            padding=15,
-        )
+    def panel(parent, title, row, column):
+        panel = ttk.LabelFrame(parent, text=title, padding=15)
         panel.grid(
             row=row,
             column=column,
@@ -135,7 +123,7 @@ class HamRadioPiUltimate:
         )
         return panel
 
-    def build_station_panel(self, parent: ttk.Frame) -> None:
+    def build_station_panel(self, parent) -> None:
         panel = self.panel(parent, "Station", 0, 0)
 
         self.add_row(panel, 0, "Callsign", self.callsign_value)
@@ -158,7 +146,7 @@ class HamRadioPiUltimate:
 
         panel.columnconfigure(1, weight=1)
 
-    def build_status_panel(self, parent: ttk.Frame) -> None:
+    def build_status_panel(self, parent) -> None:
         panel = self.panel(parent, "Station Status", 0, 1)
 
         ttk.Label(
@@ -191,7 +179,7 @@ class HamRadioPiUltimate:
 
         panel.columnconfigure(1, weight=1)
 
-    def build_information_panel(self, parent: ttk.Frame) -> None:
+    def build_information_panel(self, parent) -> None:
         panel = self.panel(parent, "Radio Information", 1, 0)
 
         for row, item in enumerate(
@@ -239,7 +227,7 @@ class HamRadioPiUltimate:
 
         panel.columnconfigure(1, weight=1)
 
-    def build_tools_panel(self, parent: ttk.Frame) -> None:
+    def build_tools_panel(self, parent) -> None:
         panel = self.panel(parent, "Tools", 1, 1)
 
         buttons = [
@@ -268,12 +256,7 @@ class HamRadioPiUltimate:
         panel.columnconfigure(1, weight=1)
 
     @staticmethod
-    def add_row(
-        parent: ttk.LabelFrame,
-        row: int,
-        title: str,
-        value: tk.StringVar,
-    ) -> None:
+    def add_row(parent, row, title, value) -> None:
         ttk.Label(
             parent,
             text=title,
@@ -370,11 +353,7 @@ class HamRadioPiUltimate:
             self.refresh_weather,
         )
 
-    def run_python_tool(
-        self,
-        path: Path,
-        title: str,
-    ) -> None:
+    def run_python_tool(self, path: Path, title: str) -> None:
         if not path.exists():
             messagebox.showerror(
                 title,
@@ -411,7 +390,7 @@ class HamRadioPiUltimate:
     def open_application_browser(self) -> None:
         self.run_python_tool(
             APPLICATION_BROWSER,
-            "Application Browser",
+            "Applications",
         )
 
     def open_updater(self) -> None:
@@ -455,5 +434,15 @@ class HamRadioPiUltimate:
     def show_hardware() -> None:
         messagebox.showinfo(
             "Hardware",
-            "Automatic hardware detection will be added soon.",
+            "Hardware configuration will be available in a future update.",
         )
+
+
+def main() -> None:
+    root = tk.Tk()
+    HamRadioPiUltimate(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
