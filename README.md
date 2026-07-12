@@ -1,6 +1,14 @@
-# HamRadio-Pi Ultimate 4.1.0
+# HamRadio-Pi Ultimate 4.1.1
 
-Clean Qt Quick/QML replacement build.
+Clean Qt Quick/QML full replacement.
+
+## Changes in 4.1.1
+
+- Rebuilt Applications page with a stable two-column GridView
+- Added application search and category filtering
+- Corrected application-card sizing and scrolling
+- Made the left navigation scroll safely on smaller displays
+
 
 ## Windows 11
 
@@ -10,17 +18,4 @@ python -m pip install --upgrade PyQt6
 python .\src\app.py
 ```
 
-The application forces the Qt Quick Controls `Basic` style before importing
-PyQt6, avoiding the optional Windows native-style plugin failure.
-
-## Raspberry Pi OS Trixie
-
-```bash
-chmod +x install-qml.sh scripts/*.sh src/app.py
-./install-qml.sh
-./scripts/start-ultimate.sh
-```
-
-## Donation address
-
-`zl4ssb.glen@gmail.com`
+The application forces Qt Quick Controls to use the cross-platform `Basic` style before PyQt6 loads.

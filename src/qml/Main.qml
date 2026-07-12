@@ -76,18 +76,30 @@ ApplicationWindow {
                     color: "#254654"
                 }
 
-                Repeater {
-                    model: window.navItems
-                    delegate: NavButton {
-                        Layout.fillWidth: true
-                        text: modelData[0]
-                        iconText: modelData[1]
-                        selected: backend.currentPage === modelData[0]
-                        onClicked: backend.setPage(modelData[0])
+                ScrollView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    contentWidth: availableWidth
+
+                    Column {
+                        width: parent.width
+                        spacing: 4
+
+                        Repeater {
+                            model: window.navItems
+
+                            delegate: NavButton {
+                                required property var modelData
+                                width: parent.width
+                                text: modelData[0]
+                                iconText: modelData[1]
+                                selected: backend.currentPage === modelData[0]
+                                onClicked: backend.setPage(modelData[0])
+                            }
+                        }
                     }
                 }
-
-                Item { Layout.fillHeight: true }
 
                 Button {
                     Layout.fillWidth: true
