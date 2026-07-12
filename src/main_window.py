@@ -15,6 +15,7 @@ from pages.settings_page import SettingsPage
 from pages.updates_page import UpdatesPage
 from pages.wpsd_page import WPSDPage
 from services.command_service import CommandRunner
+from ui.widgets import ToolTip
 
 
 class MainWindow(tk.Tk):
@@ -229,6 +230,7 @@ class MainWindow(tk.Tk):
         )
 
     def show_page(self, name: str) -> None:
+        ToolTip.hide_all()
         self.current_page = name
         self.page_title_var.set(name)
         self.pages[name].tkraise()

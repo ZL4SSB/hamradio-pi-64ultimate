@@ -7,25 +7,55 @@ from constants import COLORS
 
 
 class ToolTip:
+    """Hover tooltip with reliable timer and page-change cleanup."""
+
+    _instances: set["ToolTip"] = set()
+
     def __init__(self, widget: tk.Widget, text: str) -> None:
         self.widget = widget
         self.text = text
         self.tip: Optional[tk.Toplevel] = None
+        self.after_id: Optional[str] = None
+
+        ToolTip._instances.add(self)
+
         widget.bind("<Enter>", self._schedule, add="+")
         widget.bind("<Leave>", self._hide, add="+")
         widget.bind("<ButtonPress>", self._hide, add="+")
+        widget.bind("<Destroy>", self._destroy, add="+")
 
     def _schedule(self, _event=None) -> None:
-        self.widget.after(450, self._show)
+        self._cancel_timer()
+        self.after_id = self.widget.after(450, self._show)
+
+    def _cancel_timer(self) -> None:
+        if self.after_id is not None:
+            try:
+                self.widget.after_cancel(self.after_id)
+            except tk.TclError:
+                pass
+            self.after_id = None
 
     def _show(self) -> None:
-        if self.tip is not None or not self.widget.winfo_exists():
+        self.after_id = None
+
+        if self.tip is not None:
             return
+
+        try:
+            if not self.widget.winfo_exists():
+                return
+        except tk.TclError:
+            return
+
         self.tip = tk.Toplevel(self.widget)
         self.tip.wm_overrideredirect(True)
+        self.tip.attributes("-topmost", True)
+
         x = self.widget.winfo_rootx() + 16
         y = self.widget.winfo_rooty() + self.widget.winfo_height() + 6
         self.tip.wm_geometry(f"+{x}+{y}")
+
         tk.Label(
             self.tip,
             text=self.text,
@@ -41,9 +71,24 @@ class ToolTip:
         ).pack()
 
     def _hide(self, _event=None) -> None:
+        self._cancel_timer()
+
         if self.tip is not None:
-            self.tip.destroy()
+            try:
+                self.tip.destroy()
+            except tk.TclError:
+                pass
             self.tip = None
+
+    def _destroy(self, _event=None) -> None:
+        self._hide()
+        ToolTip._instances.discard(self)
+
+    @classmethod
+    def hide_all(cls) -> None:
+        """Close every tooltip before changing page or opening a dialog."""
+        for tooltip in tuple(cls._instances):
+            tooltip._hide()
 
 
 def action_button(
