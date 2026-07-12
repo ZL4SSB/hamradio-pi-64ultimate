@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "Installing HamRadio-Pi Ultimate 2.0.0 for Raspberry Pi OS Trixie"
+echo "Installing HamRadio-Pi Ultimate 2.1.0 for Raspberry Pi OS Trixie"
 
 sudo apt update
 sudo apt install -y \

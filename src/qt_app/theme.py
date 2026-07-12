@@ -45,6 +45,17 @@ QLabel#Teal {
 QLabel#Success {
     color: #4BD9A8;
 }
+QLabel#Warning {
+    color: #F0C76D;
+}
+QLabel#Danger {
+    color: #F17982;
+}
+QLabel#TopMetric {
+    color: #D9E6F1;
+    font-size: 9pt;
+    font-weight: 600;
+}
 QPushButton {
     background: #0F887C;
     color: white;
