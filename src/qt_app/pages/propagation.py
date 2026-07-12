@@ -1,5 +1,5 @@
 from __future__ import annotations
-from PyQt6.QtCore import QThreadPool
+from PyQt6.QtCore import Qt, QThreadPool
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLabel
 from constants import ASSETS_DIR
 from services.propagation_service import fetch_snapshot
@@ -16,7 +16,7 @@ class PropagationPage(QWidget):
                                     str(ASSETS_DIR / "branding" / "hamradio-pi-128.png")))
         refresh = ActionButton("Refresh propagation")
         refresh.clicked.connect(self.refresh)
-        layout.addWidget(refresh, alignment=0)
+        layout.addWidget(refresh, alignment=Qt.AlignmentFlag.AlignLeft)
         grid = QGridLayout()
         self.cards = {}
         defs = [

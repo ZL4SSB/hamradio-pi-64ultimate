@@ -1,5 +1,6 @@
 from __future__ import annotations
 import webbrowser
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from constants import ASSETS_DIR
 from qt_app.widgets import Card, PageHeader, ActionButton
@@ -40,6 +41,6 @@ class WPSDPage(QWidget):
             box.addWidget(description)
             button = ActionButton(title)
             button.clicked.connect(callback)
-            box.addWidget(button, alignment=0)
+            box.addWidget(button, alignment=Qt.AlignmentFlag.AlignLeft)
             layout.addWidget(card)
         layout.addStretch()

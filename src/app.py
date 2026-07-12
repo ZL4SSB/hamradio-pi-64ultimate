@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QMessageBox
 from constants import APP_NAME
 from qt_app.theme import APP_QSS
 from qt_app.splash import SplashDialog
@@ -26,10 +26,19 @@ def main() -> int:
 
     def launch():
         splash.update_stage(100, "Ready")
-        window = MainWindow()
-        window_holder["window"] = window
-        window.show()
-        splash.close()
+        try:
+            window = MainWindow()
+            window_holder["window"] = window
+            window.show()
+            splash.close()
+        except Exception as exc:
+            splash.close()
+            QMessageBox.critical(
+                None,
+                "HamRadio-Pi Ultimate startup error",
+                f"The main window could not start.\n\n{type(exc).__name__}: {exc}"
+            )
+            app.quit()
 
     QTimer.singleShot(350, stage_two)
     QTimer.singleShot(700, stage_three)
