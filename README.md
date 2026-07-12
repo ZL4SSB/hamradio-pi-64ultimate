@@ -1,34 +1,52 @@
-# HamRadio-Pi Ultimate 4.3.0
+# HamRadio-Pi Ultimate 4.3.1
 
-Raspberry Pi test release using the approved dashboard design.
+Raspberry Pi test release with an anonymous public installer.
 
-## Fresh Raspberry Pi installation from GitHub
+## Important
+
+The GitHub repository must be set to **Public**. Public downloads do not
+require a GitHub account, username, password, or access token.
+
+## One-command public installation
+
+On a fresh Raspberry Pi OS Trixie installation:
 
 ```bash
 sudo apt update
-sudo apt install -y git
-git clone https://github.com/zl4ssb/hamradio-pi-64ultimate.git
-cd hamradio-pi-64ultimate
-chmod +x install.sh scripts/*.sh src/app.py
-./install.sh
+sudo apt install -y curl
+curl -fsSL \
+  https://raw.githubusercontent.com/zl4ssb/hamradio-pi-64ultimate/main/install-public.sh \
+  -o /tmp/install-hamradio-pi.sh
+chmod +x /tmp/install-hamradio-pi.sh
+/tmp/install-hamradio-pi.sh
 ```
 
-`install.sh` automatically downloads the Qt 6, PyQt6, QML, USB and audio
-dependencies required by the application.
+The public installer:
 
-Start the application with:
+- downloads the project as a ZIP archive
+- does not run `git clone`
+- does not ask for GitHub credentials
+- installs all required Qt, QML, USB and audio packages
+- creates the application launcher and icon
+- runs a Qt/QML self-test
+
+Start afterward with:
 
 ```bash
 ~/.local/bin/hamradio-pi-ultimate
 ```
 
-or select **HamRadio-Pi Ultimate** from the desktop application menu.
+## Anonymous update
 
+```bash
+cd ~/hamradio-pi-64ultimate
+./scripts/update-public.sh
+```
 
-## Dashboard changes
+## Local installation from an extracted ZIP
 
-- Uses the selected dashboard design
-- Logo is inside the Station Profile / system summary card
-- Quick Actions is a full two-column panel
-- Live Station Profile, CPU, load, disk, system information, services and activity
-
+```bash
+cd ~/hamradio-pi-64ultimate
+chmod +x install.sh scripts/*.sh src/app.py
+./install.sh
+```

@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="https://github.com/zl4ssb/hamradio-pi-64ultimate.git"
-TARGET="$HOME/hamradio-pi-64ultimate"
+echo "This installer uses the public ZIP download and does not require"
+echo "a GitHub account or credentials."
 
-if [ -d "$TARGET/.git" ]; then
-    git -C "$TARGET" pull --ff-only
-else
-    rm -rf "$TARGET"
-    git clone "$REPO_URL" "$TARGET"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ -x "$SCRIPT_DIR/install-public.sh" ]; then
+    exec "$SCRIPT_DIR/install-public.sh"
 fi
 
-cd "$TARGET"
-chmod +x install.sh scripts/*.sh src/app.py
-exec ./install.sh
+echo "ERROR: install-public.sh was not found."
+exit 1

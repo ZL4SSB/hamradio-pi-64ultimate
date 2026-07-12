@@ -1,7 +1,7 @@
 from pathlib import Path
 
 APP_NAME = "HamRadio-Pi Ultimate"
-APP_VERSION = "4.3.0"
+APP_VERSION = "4.3.1"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / "assets"

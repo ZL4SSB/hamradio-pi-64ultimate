@@ -8,7 +8,7 @@ BIN_DIR="$HOME/.local/bin"
 
 echo
 echo "============================================================"
-echo "          HamRadio-Pi Ultimate 4.3.0 Installer"
+echo "          HamRadio-Pi Ultimate 4.3.1 Installer"
 echo "============================================================"
 echo
 echo "This installer will automatically download all required"
