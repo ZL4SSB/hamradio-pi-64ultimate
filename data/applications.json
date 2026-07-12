@@ -1,0 +1,82 @@
+[
+  {
+    "name": "WSJT-X",
+    "category": "Digital Modes",
+    "command": "wsjtx",
+    "package": "wsjtx",
+    "description": "FT8, FT4 and weak-signal operation.",
+    "recommended": true
+  },
+  {
+    "name": "FLDigi",
+    "category": "Digital Modes",
+    "command": "fldigi",
+    "package": "fldigi",
+    "description": "Multi-mode digital modem.",
+    "recommended": true
+  },
+  {
+    "name": "CHIRP",
+    "category": "Radio Programming",
+    "command": "chirp",
+    "package": "chirp",
+    "description": "Program supported amateur radios.",
+    "recommended": true
+  },
+  {
+    "name": "GQRX",
+    "category": "SDR",
+    "command": "gqrx",
+    "package": "gqrx-sdr",
+    "description": "General-purpose SDR receiver.",
+    "recommended": true
+  },
+  {
+    "name": "GNU Radio Companion",
+    "category": "SDR",
+    "command": "gnuradio-companion",
+    "package": "gnuradio",
+    "description": "Build software-defined radio systems.",
+    "recommended": false
+  },
+  {
+    "name": "Dire Wolf",
+    "category": "Packet & APRS",
+    "command": "direwolf",
+    "package": "direwolf",
+    "description": "Software TNC for packet and APRS.",
+    "recommended": true
+  },
+  {
+    "name": "GPredict",
+    "category": "Satellite",
+    "command": "gpredict",
+    "package": "gpredict",
+    "description": "Satellite tracking and pass prediction.",
+    "recommended": true
+  },
+  {
+    "name": "CQRLOG",
+    "category": "Logging",
+    "command": "cqrlog",
+    "package": "cqrlog",
+    "description": "Amateur-radio station logging.",
+    "recommended": true
+  },
+  {
+    "name": "QSSTV",
+    "category": "Images",
+    "command": "qsstv",
+    "package": "qsstv",
+    "description": "SSTV and digital image reception.",
+    "recommended": false
+  },
+  {
+    "name": "Hamlib Utilities",
+    "category": "Radio Control",
+    "command": "rigctl",
+    "package": "libhamlib-utils",
+    "description": "Radio and rotator control utilities.",
+    "recommended": true
+  }
+]

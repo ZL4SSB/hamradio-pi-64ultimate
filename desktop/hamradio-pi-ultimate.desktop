@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=HamRadio-Pi Ultimate
+Comment=Modern Ham Shack Control Centre
+Exec=%h/hamradio-pi-64ultimate/scripts/start-ultimate.sh
+Icon=hamradio-pi-ultimate
+Terminal=false
+Categories=HamRadio;Utility;
+StartupNotify=true

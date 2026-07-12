@@ -1,0 +1,21 @@
+HAMRADIO-PI ULTIMATE 4.1.0 — CLEAN FULL REPLACEMENT
+
+Delete or rename the existing repository folder before using this package.
+
+Extract this package and rename the extracted folder to:
+
+hamradio-pi-64ultimate
+
+Windows path:
+
+C:\Users\zl4ss\OneDrive\Documents\GitHub\hamradio-pi-64ultimate
+
+Install PyQt6:
+
+python -m pip install --upgrade PyQt6
+
+Start:
+
+python .\src\app.py
+
+The code forces QT_QUICK_CONTROLS_STYLE=Basic before PyQt6 is imported.
