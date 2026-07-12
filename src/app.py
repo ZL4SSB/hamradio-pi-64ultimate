@@ -1,26 +1,40 @@
 #!/usr/bin/env python3
-import tkinter as tk
-from main_window import MainWindow
-from ui.splash_screen import SplashScreen
+import sys
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QApplication
+from constants import APP_NAME
+from qt_app.theme import APP_QSS
+from qt_app.splash import SplashDialog
+from qt_app.main_window import MainWindow
 
 def main() -> int:
-    root = tk.Tk()
-    root.withdraw()
-    splash = SplashScreen(root)
-    splash.set_progress(15, "Loading interface…")
-    root.after(350, lambda: splash.set_progress(45, "Loading services…"))
-    root.after(700, lambda: splash.set_progress(75, "Preparing dashboard…"))
+    app = QApplication(sys.argv)
+    app.setApplicationName(APP_NAME)
+    app.setStyleSheet(APP_QSS)
+
+    splash = SplashDialog()
+    splash.show()
+    splash.update_stage(15, "Loading interface…")
+
+    window_holder = {}
+
+    def stage_two():
+        splash.update_stage(45, "Loading services…")
+
+    def stage_three():
+        splash.update_stage(75, "Preparing dashboard…")
 
     def launch():
-        splash.set_progress(100, "Ready")
-        splash.destroy()
-        root.destroy()
-        app = MainWindow()
-        app.mainloop()
+        splash.update_stage(100, "Ready")
+        window = MainWindow()
+        window_holder["window"] = window
+        window.show()
+        splash.close()
 
-    root.after(1100, launch)
-    root.mainloop()
-    return 0
+    QTimer.singleShot(350, stage_two)
+    QTimer.singleShot(700, stage_three)
+    QTimer.singleShot(1100, launch)
+    return app.exec()
 
 if __name__ == "__main__":
     raise SystemExit(main())

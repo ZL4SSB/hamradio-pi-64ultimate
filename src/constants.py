@@ -1,7 +1,7 @@
 from pathlib import Path
 
 APP_NAME = "HamRadio-Pi Ultimate"
-APP_VERSION = "1.1.0"
+APP_VERSION = "2.0.0"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -38,4 +38,4 @@ PROPAGATION_URLS = {
     "solar_wind": "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json",
 }
 
-DONATE_URL = "https://www.paypal.com/paypalme/zl4ssbglen/1USD"
+DONATE_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=zl4ssb.glen%40paypal.com&currency_code=USD&amount=1.00"

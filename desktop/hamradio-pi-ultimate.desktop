@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=HamRadio-Pi Ultimate
-Comment=Ham Shack Control Centre
+Comment=Modern Ham Shack Control Centre
 Exec=python3 %h/hamradio-pi-64ultimate/src/app.py
 Icon=hamradio-pi-ultimate
 Terminal=false
