@@ -1,52 +1,48 @@
-# HamRadio-Pi Ultimate 4.3.1
+# HamRadio-Pi Ultimate 4.3.2
 
-Raspberry Pi test release with an anonymous public installer.
+One-click Raspberry Pi test release.
 
-## Important
+## Easiest public installation
 
-The GitHub repository must be set to **Public**. Public downloads do not
-require a GitHub account, username, password, or access token.
+The repository must be public. No GitHub account or login is required.
 
-## One-command public installation
-
-On a fresh Raspberry Pi OS Trixie installation:
+Copy and paste this single command into a Raspberry Pi terminal:
 
 ```bash
-sudo apt update
-sudo apt install -y curl
-curl -fsSL \
-  https://raw.githubusercontent.com/zl4ssb/hamradio-pi-64ultimate/main/install-public.sh \
-  -o /tmp/install-hamradio-pi.sh
-chmod +x /tmp/install-hamradio-pi.sh
-/tmp/install-hamradio-pi.sh
+curl -fsSL https://raw.githubusercontent.com/zl4ssb/hamradio-pi-64ultimate/main/install-public.sh | bash
 ```
 
-The public installer:
+The installer automatically:
 
-- downloads the project as a ZIP archive
-- does not run `git clone`
-- does not ask for GitHub credentials
-- installs all required Qt, QML, USB and audio packages
-- creates the application launcher and icon
-- runs a Qt/QML self-test
+- downloads HamRadio-Pi Ultimate
+- detects the Raspberry Pi OS environment
+- installs only packages available for that OS
+- handles Debian package-name changes
+- installs PyQt6 and Qt Quick/QML
+- creates the desktop launcher and icon
+- runs a self-test
+- starts the program when a graphical desktop is active
 
-Start afterward with:
+## Installing an extracted ZIP
+
+Open a terminal inside the extracted folder and run:
 
 ```bash
-~/.local/bin/hamradio-pi-ultimate
+chmod +x install.sh
+./install.sh
 ```
 
-## Anonymous update
+## Starting later
+
+From the desktop menu, select **HamRadio-Pi Ultimate**, or run:
+
+```bash
+hamradio-pi-ultimate
+```
+
+## Updating later
 
 ```bash
 cd ~/hamradio-pi-64ultimate
 ./scripts/update-public.sh
-```
-
-## Local installation from an extracted ZIP
-
-```bash
-cd ~/hamradio-pi-64ultimate
-chmod +x install.sh scripts/*.sh src/app.py
-./install.sh
 ```

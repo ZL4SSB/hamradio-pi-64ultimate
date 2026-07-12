@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
-echo "This installer uses the public ZIP download and does not require"
-echo "a GitHub account or credentials."
+echo "Using anonymous public ZIP installation."
+echo "No GitHub account or credentials are required."
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+URL="https://raw.githubusercontent.com/zl4ssb/hamradio-pi-64ultimate/main/install-public.sh"
+TMP_INSTALLER="$(mktemp)"
+trap 'rm -f "$TMP_INSTALLER"' EXIT
 
-if [ -x "$SCRIPT_DIR/install-public.sh" ]; then
-    exec "$SCRIPT_DIR/install-public.sh"
-fi
-
-echo "ERROR: install-public.sh was not found."
-exit 1
+curl -fsSL --retry 3 "$URL" -o "$TMP_INSTALLER"
+chmod +x "$TMP_INSTALLER"
+exec "$TMP_INSTALLER"
