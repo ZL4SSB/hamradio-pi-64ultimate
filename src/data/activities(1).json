@@ -1,0 +1,122 @@
+{
+  "activities": [
+    {
+      "name": "FT8 / FT4",
+      "category": "Digital Modes",
+      "description": "Weak-signal digital contacts using WSJT-X.",
+      "applications": [
+        "WSJT-X",
+        "FLRIG"
+      ],
+      "packages": [
+        "wsjtx",
+        "flrig",
+        "hamlib-utils"
+      ],
+      "estimated_gb": 1,
+      "beginner_friendly": true
+    },
+    {
+      "name": "JS8 Keyboard Chat",
+      "category": "Digital Modes",
+      "description": "Keyboard messaging using JS8Call.",
+      "applications": [
+        "JS8Call",
+        "FLRIG"
+      ],
+      "packages": [
+        "js8call",
+        "flrig",
+        "hamlib-utils"
+      ],
+      "estimated_gb": 1,
+      "beginner_friendly": true
+    },
+    {
+      "name": "RTTY / PSK / Olivia",
+      "category": "Digital Modes",
+      "description": "Multi-mode digital operation using FLDIGI.",
+      "applications": [
+        "FLDIGI",
+        "FLRIG"
+      ],
+      "packages": [
+        "fldigi",
+        "flrig",
+        "hamlib-utils"
+      ],
+      "estimated_gb": 1,
+      "beginner_friendly": true
+    },
+    {
+      "name": "SDR Listening",
+      "category": "SDR",
+      "description": "Receive and explore radio signals with an SDR receiver.",
+      "applications": [
+        "GQRX"
+      ],
+      "packages": [
+        "gqrx-sdr",
+        "rtl-sdr"
+      ],
+      "estimated_gb": 2,
+      "beginner_friendly": true
+    },
+    {
+      "name": "APRS and Packet",
+      "category": "APRS and Packet",
+      "description": "Decode and operate APRS or packet radio.",
+      "applications": [
+        "Direwolf",
+        "Xastir"
+      ],
+      "packages": [
+        "direwolf",
+        "xastir",
+        "ax25-tools"
+      ],
+      "estimated_gb": 1,
+      "beginner_friendly": false
+    },
+    {
+      "name": "Satellite Tracking",
+      "category": "Satellite",
+      "description": "Track amateur-radio satellites and predict passes.",
+      "applications": [
+        "Gpredict"
+      ],
+      "packages": [
+        "gpredict",
+        "hamlib-utils"
+      ],
+      "estimated_gb": 1,
+      "beginner_friendly": true
+    },
+    {
+      "name": "Radio Programming",
+      "category": "Programming",
+      "description": "Program supported handheld and mobile radios.",
+      "applications": [
+        "CHIRP"
+      ],
+      "packages": [
+        "chirp"
+      ],
+      "estimated_gb": 1,
+      "beginner_friendly": true
+    },
+    {
+      "name": "MMDVM Hotspot",
+      "category": "Digital Voice",
+      "description": "Prepare a WPSD SD card for a separate MMDVM Raspberry Pi.",
+      "applications": [
+        "WPSD SD Card Builder"
+      ],
+      "packages": [
+        "rpi-imager"
+      ],
+      "estimated_gb": 2,
+      "beginner_friendly": true
+    }
+  ]
+}

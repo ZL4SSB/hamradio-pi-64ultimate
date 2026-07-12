@@ -103,7 +103,7 @@ class DashboardPage(BasePage):
 
         tk.Label(
             yobbo,
-            text="Yobbo says…",
+            text="Shack Assistant",
             bg=COLORS["panel"],
             fg=COLORS["success"],
             font=("DejaVu Sans", 13, "bold"),

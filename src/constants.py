@@ -1,7 +1,7 @@
 from pathlib import Path
 
 APP_NAME = "HamRadio-Pi Ultimate"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -9,6 +9,7 @@ CONFIG_DIR = BASE_DIR / "config"
 SCRIPTS_DIR = BASE_DIR / "scripts"
 DOCS_DIR = BASE_DIR / "docs"
 REPORTS_DIR = BASE_DIR / "reports"
+ASSETS_DIR = BASE_DIR / "assets"
 
 COLORS = {
     "background": "#0F1621",
@@ -36,3 +37,5 @@ PROPAGATION_URLS = {
     "scales": "https://services.swpc.noaa.gov/products/noaa-scales.json",
     "solar_wind": "https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json",
 }
+
+DONATE_URL = "https://www.paypal.com/paypalme/zl4ssbglen/1USD"

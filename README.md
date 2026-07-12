@@ -1,40 +1,41 @@
-# HamRadio-Pi Ultimate modern GUI drop-in
+# HamRadio-Pi Ultimate
 
-This package supplies the first working version of the redesigned single-window
-application.
+HamRadio-Pi Ultimate aims to make Raspberry Pi amateur radio software easier to install, organise, configure, and maintain.
 
-It does not replace or modify the existing installer and WPSD shell scripts.
-Copy the included `src/app.py` and `data/applications.json` into the repository.
+## Mission
 
-## Test on Raspberry Pi
+**One command. One wizard. One Ham Radio menu.**
+
+## Current development features
+
+- Main station dashboard
+- Station setup wizard
+- Station Builder profiles
+- Application catalogue
+- Weather data-source settings
+- Git-based safe updater with backup and rollback
+- WPSD SD Card Builder for a separate MMDVM Raspberry Pi
+- Raspberry Pi OS system and storage checks
+
+## Run on Windows or Raspberry Pi OS
 
 ```bash
-cd ~/hamradio-pi-64ultimate
-chmod +x src/app.py
-python3 src/app.py
+python src/app.py
 ```
 
-The GUI uses Tkinter from the Python standard library. If Raspberry Pi OS says
-Tkinter is missing:
+The compatibility launcher also works:
 
 ```bash
-sudo apt update
-sudo apt install -y python3-tk
+python src/hamshack.py
 ```
 
-## Included features
+## Raspberry Pi installer
 
-- Single resizable window
-- Left navigation sidebar
-- Dark teal theme
-- Hover tooltips
-- Dashboard and activity log
-- Application catalogue with install/launch state
-- WPSD script launcher
-- Read-only hardware detection
-- Git update status page
-- Settings storage
-- Propagation-page foundation
-- Background workers to avoid frozen windows
+```bash
+chmod +x install.sh
+./install.sh
+```
 
-Version: 0.4.0-dev
+## Project status
+
+This project is under active development and is not yet a stable release.

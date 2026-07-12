@@ -3,9 +3,10 @@ from __future__ import annotations
 import shutil
 import subprocess
 import tkinter as tk
+import webbrowser
 from tkinter import messagebox, ttk
 
-from constants import APP_NAME, APP_VERSION, COLORS
+from constants import APP_NAME, APP_VERSION, COLORS, DONATE_URL
 from pages.applications_page import ApplicationsPage
 from pages.dashboard_page import DashboardPage
 from pages.hardware_page import HardwarePage
@@ -16,6 +17,7 @@ from pages.updates_page import UpdatesPage
 from pages.wpsd_page import WPSDPage
 from services.command_service import CommandRunner
 from ui.widgets import ToolTip
+from ui.image_service import load_image
 
 
 class MainWindow(tk.Tk):
@@ -25,6 +27,12 @@ class MainWindow(tk.Tk):
         self.geometry("1240x800")
         self.minsize(1024, 680)
         self.configure(bg=COLORS["background"])
+        self._icon_image = load_image("hamradio-pi-64.png", 64, 64)
+        if self._icon_image:
+            try:
+                self.iconphoto(True, self._icon_image)
+            except tk.TclError:
+                pass
         self.option_add("*Font", ("DejaVu Sans", 10))
 
         self._setup_style()
@@ -176,6 +184,20 @@ class MainWindow(tk.Tk):
             font=("DejaVu Sans", 11, "bold"),
         ).pack(side="left", padx=18)
 
+        self.top_logo = load_image("hamradio-pi-128.png", 72, 72)
+        if self.top_logo:
+            top_logo_label = tk.Label(topbar, image=self.top_logo, bg=COLORS["background_alt"])
+            top_logo_label.pack(side="right", padx=(4, 12))
+
+        donate_button = tk.Button(
+            topbar, text="Donate", command=lambda: webbrowser.open(DONATE_URL),
+            bg="#F4C430", fg="#111111", activebackground="#FFD95B",
+            activeforeground="#111111", relief="flat", bd=0,
+            padx=10, pady=5, cursor="hand2",
+            font=("DejaVu Sans", 8, "bold")
+        )
+        donate_button.pack(side="right", padx=8)
+
         self.connection_label = tk.Label(
             topbar,
             text="● Ready",
@@ -187,6 +209,12 @@ class MainWindow(tk.Tk):
 
         host = tk.Frame(main, bg=COLORS["background"])
         host.pack(fill="both", expand=True)
+
+        self.mascot_image = load_image("mascot.png", 220, 220)
+        if self.mascot_image:
+            mascot = tk.Label(main, image=self.mascot_image, bg=COLORS["background"])
+            mascot.place(relx=1.0, rely=1.0, x=-18, y=-52, anchor="se")
+            mascot.lift()
 
         status = tk.Frame(main, bg="#08111A")
         status.pack(fill="x", side="bottom")
@@ -200,7 +228,7 @@ class MainWindow(tk.Tk):
         ).pack(side="left", padx=13, pady=7)
         tk.Label(
             status,
-            text="73 mate!",
+            text="Built for Amateur Radio",
             bg="#08111A",
             fg=COLORS["success"],
             font=("DejaVu Sans", 8, "bold"),
