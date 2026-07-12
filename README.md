@@ -1,13 +1,34 @@
-# HamRadio-Pi Ultimate 4.1.1
+# HamRadio-Pi Ultimate 4.3.0
 
-Clean Qt Quick/QML full replacement.
+Raspberry Pi test release using the approved dashboard design.
 
-## Changes in 4.1.1
+## Fresh Raspberry Pi installation from GitHub
 
-- Rebuilt Applications page with a stable two-column GridView
-- Added application search and category filtering
-- Corrected application-card sizing and scrolling
-- Made the left navigation scroll safely on smaller displays
+```bash
+sudo apt update
+sudo apt install -y git
+git clone https://github.com/zl4ssb/hamradio-pi-64ultimate.git
+cd hamradio-pi-64ultimate
+chmod +x install.sh scripts/*.sh src/app.py
+./install.sh
+```
+
+`install.sh` automatically downloads the Qt 6, PyQt6, QML, USB and audio
+dependencies required by the application.
+
+Start the application with:
+
+```bash
+~/.local/bin/hamradio-pi-ultimate
+```
+
+or select **HamRadio-Pi Ultimate** from the desktop application menu.
 
 
+## Dashboard changes
+
+- Uses the selected dashboard design
+- Logo is inside the Station Profile / system summary card
+- Quick Actions is a full two-column panel
+- Live Station Profile, CPU, load, disk, system information, services and activity
 

@@ -2,11 +2,12 @@
 
 import os
 
-# This must be set before importing PyQt6. It avoids the optional Windows
-# native Qt Quick Controls plugin that may be missing from pip installations.
+# Must be set before importing PyQt6. This avoids optional platform style
+# plugins and makes the same QML controls work on Windows and Raspberry Pi.
 os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
 
 import argparse
+import json
 import sys
 import traceback
 
@@ -16,13 +17,24 @@ from PyQt6.QtQml import QQmlApplicationEngine
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from backend import Backend
-from constants import APP_NAME, ASSETS_DIR, BASE_DIR, REPORTS_DIR
+from constants import APP_NAME, ASSETS_DIR, BASE_DIR, CONFIG_DIR, REPORTS_DIR
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description=APP_NAME)
     parser.add_argument("--no-splash", action="store_true")
+    parser.add_argument("--self-test", action="store_true")
     return parser.parse_args()
+
+
+def show_splash_setting() -> bool:
+    try:
+        settings = json.loads(
+            (CONFIG_DIR / "settings.json").read_text(encoding="utf-8")
+        )
+        return bool(settings.get("show_splash", True))
+    except Exception:
+        return True
 
 
 def write_error(text: str) -> str:
@@ -56,14 +68,13 @@ def main() -> int:
         engine.load(QUrl.fromLocalFile(str(path)))
         return engine
 
-    def show_error(messages: list[str]):
+    def show_error(messages):
         text = "\n".join(messages) or "The QML engine returned no window."
-        log_path = write_error(text)
+        path = write_error(text)
         QMessageBox.critical(
             None,
             APP_NAME,
-            f"The QML interface could not start.\n\n{text}\n\n"
-            f"Full log:\n{log_path}",
+            f"The interface could not start.\n\n{text}\n\nFull log:\n{path}",
         )
         app.quit()
 
@@ -71,17 +82,20 @@ def main() -> int:
         nonlocal splash_engine
         if splash_engine is None:
             return
+
         for item in splash_engine.rootObjects():
             item.close()
+
         splash_engine.deleteLater()
         splash_engine = None
         app.processEvents()
 
     def load_main():
         warnings: list[str] = []
-        path = BASE_DIR / "src" / "qml" / "Main.qml"
+        qml_path = BASE_DIR / "src" / "qml" / "Main.qml"
+
         try:
-            engine = load_engine(path, warnings)
+            engine = load_engine(qml_path, warnings)
         except Exception:
             warnings.append(traceback.format_exc())
             close_splash()
@@ -90,23 +104,29 @@ def main() -> int:
 
         if not engine.rootObjects():
             close_splash()
-            warnings.append(f"Could not load: {path}")
+            warnings.append(f"Could not load: {qml_path}")
             show_error(warnings)
             return
 
         close_splash()
         app.setQuitOnLastWindowClosed(True)
 
-    if args.no_splash:
-        QTimer.singleShot(0, load_main)
-    else:
+        if args.self_test:
+            QTimer.singleShot(900, app.quit)
+
+    use_splash = not args.no_splash and show_splash_setting()
+
+    if use_splash:
         warnings: list[str] = []
         splash_path = BASE_DIR / "src" / "qml" / "Splash.qml"
         splash_engine = load_engine(splash_path, warnings)
+
         if not splash_engine.rootObjects():
             show_error(warnings + [f"Could not load: {splash_path}"])
         else:
-            QTimer.singleShot(850, load_main)
+            QTimer.singleShot(900, load_main)
+    else:
+        QTimer.singleShot(0, load_main)
 
     return app.exec()
 

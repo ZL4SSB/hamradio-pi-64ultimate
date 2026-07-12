@@ -6,188 +6,160 @@ import "pages"
 
 ApplicationWindow {
     id: window
-    width: 1440
-    height: 900
-    minimumWidth: 1120
-    minimumHeight: 720
+    width: 1536
+    height: 1024
+    minimumWidth: 1150
+    minimumHeight: 760
     visible: true
     title: backend.appName + " " + backend.appVersion
-    color: "#07131C"
+    color: "#06151F"
 
     property var navItems: [
         ["Dashboard", "⌂"],
         ["Applications", "▦"],
-        ["Hardware", "⌁"],
+        ["Hardware Manager", "⌁"],
         ["WPSD Centre", "▣"],
         ["Propagation", "☀"],
-        ["Callsign & Station", "♙"],
-        ["Updates", "↻"],
-        ["Tools", "⌕"],
-        ["Settings", "⚙"],
-        ["Help & Logs", "?"],
+        ["Station Profile", "♙"],
+        ["Updates", "◯"],
+        ["System Tools", "⌕"],
+        ["Preferences", "⚙"],
+        ["Help", "?"],
         ["About", "ⓘ"]
     ]
 
-    RowLayout {
+    ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
         Rectangle {
-            Layout.preferredWidth: 245
-            Layout.fillHeight: true
-            color: "#081721"
-            border.color: "#1D4353"
+            Layout.fillWidth: true
+            Layout.preferredHeight: 62
+            color: "#04121B"
 
-            ColumnLayout {
+            RowLayout {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 4
+                anchors.leftMargin: 22
+                anchors.rightMargin: 20
+                spacing: 14
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 76
-
-                    Image {
-                        source: backend.assetRoot + "/hamradio-pi-128.png"
-                        sourceSize.width: 64
-                        sourceSize.height: 64
-                        fillMode: Image.PreserveAspectFit
-                    }
-
-                    ColumnLayout {
-                        Text {
-                            text: "HamRadio-Pi"
-                            color: "#F4F8FA"
-                            font.pixelSize: 18
-                            font.bold: true
-                        }
-                        Text {
-                            text: "ULTIMATE"
-                            color: "#20C6B3"
-                            font.pixelSize: 13
-                            font.bold: true
-                        }
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: "#254654"
-                }
-
-                ScrollView {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    contentWidth: availableWidth
-
-                    Column {
-                        width: parent.width
-                        spacing: 4
-
-                        Repeater {
-                            model: window.navItems
-
-                            delegate: NavButton {
-                                required property var modelData
-                                width: parent.width
-                                text: modelData[0]
-                                iconText: modelData[1]
-                                selected: backend.currentPage === modelData[0]
-                                onClicked: backend.setPage(modelData[0])
-                            }
-                        }
-                    }
-                }
-
-                Button {
-                    Layout.fillWidth: true
-                    text: "Donate"
-                    onClicked: backend.openDonate()
-
-                    background: Rectangle {
-                        radius: 8
-                        color: parent.hovered ? "#FFD95B" : "#F4C430"
-                    }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "#111111"
-                        font.bold: true
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                Text {
+                    text: "☰"
+                    color: "#DBE8EE"
+                    font.pixelSize: 24
                 }
 
                 Text {
-                    text: "Version " + backend.appVersion
-                    color: "#7893A1"
-                    font.pixelSize: 11
+                    text: backend.appName
+                    color: "#F4F8FA"
+                    font.pixelSize: 20
+                    font.bold: true
+                }
+
+                Text {
+                    text: "v" + backend.appVersion
+                    color: "#9CB0BC"
+                    font.pixelSize: 12
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: "—"
+                    color: "#D7E3E9"
+                    font.pixelSize: 20
+                }
+
+                Text {
+                    text: "□"
+                    color: "#D7E3E9"
+                    font.pixelSize: 20
+                }
+
+                Text {
+                    text: "×"
+                    color: "#D7E3E9"
+                    font.pixelSize: 24
                 }
             }
         }
 
-        ColumnLayout {
+        RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 0
 
             Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 58
-                color: "#0B1D28"
-                border.color: "#1D4353"
+                Layout.preferredWidth: 250
+                Layout.fillHeight: true
+                color: "#071923"
+                border.color: "#244D5D"
 
-                RowLayout {
+                ColumnLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 20
-                    anchors.rightMargin: 18
-                    spacing: 16
+                    anchors.margins: 14
+                    spacing: 5
+
+                    Repeater {
+                        model: window.navItems
+
+                        delegate: NavButton {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            text: modelData[0]
+                            iconText: modelData[1]
+                            selected: backend.currentPage === modelData[0]
+                            onClicked: {
+                                var page = modelData[0]
+                                if (page === "Hardware Manager")
+                                    page = "Hardware"
+                                else if (page === "System Tools")
+                                    page = "Tools"
+                                else if (page === "Help")
+                                    page = "Help & Logs"
+                                backend.setPage(page)
+                            }
+                        }
+                    }
+
+                    Item { Layout.fillHeight: true }
 
                     Rectangle {
-                        width: 14
-                        height: 14
-                        radius: 7
-                        color: backend.online ? "#72D936" : "#F17982"
-                    }
-                    Text {
-                        text: backend.online ? "Online" : "Offline"
-                        color: "#E6F0F5"
-                        font.bold: true
-                    }
-                    Rectangle { width: 1; height: 28; color: "#245064" }
-                    Text {
-                        text: backend.piModel
-                        color: "#D8E5EC"
-                        font.bold: true
-                    }
-                    Rectangle { width: 1; height: 28; color: "#245064" }
-                    Text {
-                        text: "CPU " + backend.cpuTemp
-                        color: "#D8E5EC"
-                        font.bold: true
-                    }
-                    Rectangle { width: 1; height: 28; color: "#245064" }
-                    Text {
-                        text: "Memory " + backend.memoryPercent + "%"
-                        color: "#D8E5EC"
-                        font.bold: true
-                    }
-                    Item { Layout.fillWidth: true }
-                    Text {
-                        text: backend.callsign
-                        color: "#20C6B3"
-                        font.bold: true
-                    }
-                    Text {
-                        text: backend.locator
-                        color: "#D8E5EC"
-                    }
-                    Image {
-                        source: backend.assetRoot + "/hamradio-pi-128.png"
-                        sourceSize.width: 70
-                        sourceSize.height: 70
-                        fillMode: Image.PreserveAspectFit
+                        Layout.fillWidth: true
+                        implicitHeight: 104
+                        radius: 9
+                        color: "#0C2531"
+                        border.color: "#29586A"
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 14
+                            spacing: 7
+
+                            RowLayout {
+                                Rectangle {
+                                    width: 12
+                                    height: 12
+                                    radius: 6
+                                    color: backend.online ? "#61DC4C" : "#F0C76D"
+                                }
+
+                                Text {
+                                    text: "System Status"
+                                    color: "#F1F6F9"
+                                    font.pixelSize: 14
+                                    font.bold: true
+                                }
+                            }
+
+                            Text {
+                                text: backend.online
+                                      ? "All systems operational"
+                                      : "Local services available"
+                                color: backend.online ? "#61DC4C" : "#F0C76D"
+                                font.pixelSize: 12
+                            }
+                        }
                     }
                 }
             }
@@ -195,15 +167,18 @@ ApplicationWindow {
             Loader {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.margins: 20
+                Layout.leftMargin: 40
+                Layout.rightMargin: 40
+                Layout.topMargin: 20
+                Layout.bottomMargin: 20
 
                 sourceComponent: {
                     switch (backend.currentPage) {
                     case "Dashboard": return dashboard
                     case "Applications": return applications
                     case "Hardware": return hardware
-                    case "Callsign & Station":
-                    case "Settings": return station
+                    case "Station Profile": return station
+                    case "Preferences": return preferences
                     case "WPSD Centre": return wpsd
                     case "Propagation": return propagation
                     case "Updates": return updates
@@ -214,37 +189,6 @@ ApplicationWindow {
                     }
                 }
             }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 34
-                color: "#061019"
-                border.color: "#1D4353"
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 14
-
-                    Text {
-                        text: backend.appName + " " + backend.appVersion
-                        color: "#C7D6DE"
-                        font.pixelSize: 11
-                    }
-                    Item { Layout.fillWidth: true }
-                    Text {
-                        text: "One Command. One Wizard. One Ham Radio Station."
-                        color: "#849DAA"
-                        font.pixelSize: 11
-                    }
-                    Item { Layout.fillWidth: true }
-                    Text {
-                        text: "Built for Amateur Radio"
-                        color: "#20C6B3"
-                        font.pixelSize: 11
-                    }
-                }
-            }
         }
     }
 
@@ -252,59 +196,107 @@ ApplicationWindow {
     Component { id: applications; Applications {} }
     Component { id: hardware; Hardware {} }
     Component { id: station; Station {} }
+    Component { id: preferences; Preferences {} }
 
     Component {
         id: wpsd
         Generic {
             pageTitle: "WPSD Centre"
             pageSubtitle: "Download, flash, back up, restore and configure WPSD media."
-            cards: ["Download Image", "Detect SD Cards", "Flash Image", "Verify Image",
-                    "Backup Card", "Restore Card", "Configure Wi-Fi", "Configure Callsign"]
+            cards: [
+                "Download WPSD Image",
+                "Detect SD Cards",
+                "Flash Image",
+                "Verify Image",
+                "Back Up Card",
+                "Restore Card",
+                "Configure Wi-Fi",
+                "Configure Callsign"
+            ]
         }
     }
+
     Component {
         id: propagation
         Generic {
             pageTitle: "Propagation"
             pageSubtitle: "Solar, geomagnetic and HF band-condition information."
-            cards: ["Solar Flux", "K Index", "A Index", "X-Ray", "Sunspots",
-                    "Solar Wind", "Band Conditions", "Greyline"]
+            cards: [
+                "Solar Flux",
+                "K Index",
+                "A Index",
+                "X-Ray",
+                "Sunspots",
+                "Solar Wind",
+                "Band Conditions",
+                "Greyline"
+            ]
         }
     }
+
     Component {
         id: updates
         Generic {
-            pageTitle: "Update Manager"
+            pageTitle: "Updates"
             pageSubtitle: "Check, review and install HamRadio-Pi Ultimate updates."
-            cards: ["Current Version", "Check GitHub", "View Changelog",
-                    "Download Update", "Create Backup", "Rollback"]
+            cards: [
+                "Current Version",
+                "Check GitHub",
+                "View Changelog",
+                "Download Update",
+                "Create Backup",
+                "Rollback"
+            ]
         }
     }
+
     Component {
         id: tools
         Generic {
             pageTitle: "System Tools"
             pageSubtitle: "Maintenance, reports and Raspberry Pi utilities."
-            cards: ["System Report", "Package Repair", "Disk Check", "Network Test",
-                    "USB Report", "Audio Test", "Open Terminal", "Diagnostics"]
+            cards: [
+                "System Report",
+                "Package Repair",
+                "Disk Check",
+                "Network Test",
+                "USB Report",
+                "Audio Test",
+                "Open Terminal",
+                "Diagnostics"
+            ]
         }
     }
+
     Component {
         id: help
         Generic {
             pageTitle: "Help & Logs"
             pageSubtitle: "Troubleshooting, documentation and application logs."
-            cards: ["Quick Start", "User Guide", "Application Log", "Hardware Log",
-                    "Installation Log", "Create Support Bundle"]
+            cards: [
+                "Quick Start",
+                "User Guide",
+                "Application Log",
+                "Hardware Log",
+                "Installation Log",
+                "Create Support Bundle"
+            ]
         }
     }
+
     Component {
         id: about
         Generic {
             pageTitle: "About"
             pageSubtitle: backend.appName + " " + backend.appVersion
-            cards: ["Project Information", "Licence", "GitHub Repository",
-                    "Donate", "Credits", "System Information"]
+            cards: [
+                "Project Information",
+                "Licence",
+                "GitHub Repository",
+                "Donate",
+                "Credits",
+                "System Information"
+            ]
         }
     }
 }
