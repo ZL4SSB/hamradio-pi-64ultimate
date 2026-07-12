@@ -1,13 +1,9 @@
 [Desktop Entry]
 Type=Application
-Version=1.0
 Name=HamRadio-Pi Ultimate
-GenericName=Amateur Radio Station Manager
-Comment=Build and manage a Raspberry Pi amateur radio station
-Exec=__PROJECT_DIR__/scripts/hamradio-pi-ultimate
-Icon=radio
+Comment=Ham Shack Control Centre
+Exec=python3 %h/hamradio-pi-64ultimate/src/app.py
+Icon=network-wireless
 Terminal=false
 Categories=HamRadio;Utility;
-Keywords=ham;radio;amateur;SDR;digital;MMDVM;
 StartupNotify=true
-Path=__PROJECT_DIR__

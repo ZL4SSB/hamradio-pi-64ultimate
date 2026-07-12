@@ -1,53 +1,52 @@
 from __future__ import annotations
-
-import shutil
 import tkinter as tk
-from tkinter import messagebox, ttk
-
+from tkinter import ttk
 from constants import COLORS, DATA_DIR
 from pages.base_page import BasePage
 from services.application_service import is_installed, load_catalogue
-from ui.widgets import Card, ToolTip, action_button
-
+from ui.widgets import Card, SectionTitle, ToolTip, action_button
 
 class ApplicationsPage(BasePage):
     def __init__(self, parent, app) -> None:
-        super().__init__(parent, app, "Applications", "Browse, install and launch amateur-radio software.")
+        super().__init__(parent, app, "Applications", "Install, launch, repair, update or remove radio software.")
+        intro = tk.Frame(self.body, bg=COLORS["background"])
+        intro.pack(fill="x", pady=(0, 9))
+        SectionTitle(intro, "Application manager", "Actions run through the system package manager.").pack(side="left")
+        self.count_label = tk.Label(intro, text="", bg=COLORS["background"],
+                                    fg=COLORS["muted"], font=("DejaVu Sans", 9, "bold"))
+        self.count_label.pack(side="right")
 
         controls = tk.Frame(self.body, bg=COLORS["background"])
         controls.pack(fill="x", pady=(0, 10))
-
+        search_wrap = tk.Frame(controls, bg=COLORS["panel_alt"],
+                               highlightbackground=COLORS["border"], highlightthickness=1)
+        search_wrap.pack(side="left", fill="x", expand=True)
+        tk.Label(search_wrap, text="⌕", bg=COLORS["panel_alt"], fg=COLORS["teal"],
+                 font=("DejaVu Sans", 13, "bold")).pack(side="left", padx=(10, 5))
         self.search_var = tk.StringVar()
-        search = tk.Entry(
-            controls, textvariable=self.search_var,
-            bg=COLORS["panel_alt"], fg=COLORS["text"],
-            insertbackground=COLORS["text"], relief="flat",
-            font=("DejaVu Sans", 10)
-        )
-        search.pack(side="left", fill="x", expand=True, ipady=9)
-        search.bind("<KeyRelease>", lambda _e: self.render())
+        entry = tk.Entry(search_wrap, textvariable=self.search_var, bg=COLORS["panel_alt"],
+                         fg=COLORS["text"], insertbackground=COLORS["text"],
+                         relief="flat", font=("DejaVu Sans", 10))
+        entry.pack(side="left", fill="x", expand=True, ipady=9, padx=(0, 8))
+        entry.bind("<KeyRelease>", lambda _e: self.render())
 
         self.category_var = tk.StringVar(value="All categories")
-        self.category_box = ttk.Combobox(
-            controls, textvariable=self.category_var, state="readonly", width=20
-        )
+        self.category_box = ttk.Combobox(controls, textvariable=self.category_var,
+                                         state="readonly", width=21)
         self.category_box.pack(side="left", padx=10)
         self.category_box.bind("<<ComboboxSelected>>", lambda _e: self.render())
-
-        refresh = action_button(controls, "Refresh", self.render, small=True)
-        refresh.pack(side="left")
-        ToolTip(refresh, "Recheck which applications are installed.")
+        action_button(controls, "Refresh", self.render, small=True, secondary=True).pack(side="left")
 
         self.canvas = tk.Canvas(self.body, bg=COLORS["background"], highlightthickness=0)
         scrollbar = ttk.Scrollbar(self.body, orient="vertical", command=self.canvas.yview)
         self.content = tk.Frame(self.canvas, bg=COLORS["background"])
         self.content.bind("<Configure>", lambda _e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        self.canvas.create_window((0, 0), window=self.content, anchor="nw")
+        self.window_id = self.canvas.create_window((0, 0), window=self.content, anchor="nw")
+        self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(self.window_id, width=e.width))
         self.canvas.configure(yscrollcommand=scrollbar.set)
         self.canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
         self.canvas.bind_all("<MouseWheel>", self._wheel)
-
         self.render()
 
     def _wheel(self, event) -> None:
@@ -57,70 +56,59 @@ class ApplicationsPage(BasePage):
     def render(self) -> None:
         for child in self.content.winfo_children():
             child.destroy()
-
         try:
             entries = load_catalogue(DATA_DIR / "applications.json")
         except Exception as exc:
             self.app.log(f"Application catalogue error: {exc}")
             return
-
-        categories = ["All categories"] + sorted({entry.category for entry in entries})
+        categories = ["All categories"] + sorted({x.category for x in entries})
         self.category_box["values"] = categories
         if self.category_var.get() not in categories:
             self.category_var.set("All categories")
-
         query = self.search_var.get().strip().lower()
         selected = self.category_var.get()
-
         filtered = [
-            entry for entry in entries
-            if (selected == "All categories" or entry.category == selected)
-            and (
-                not query
-                or query in entry.name.lower()
-                or query in entry.description.lower()
-                or query in entry.category.lower()
-            )
+            x for x in entries
+            if (selected == "All categories" or x.category == selected)
+            and (not query or query in x.name.lower() or query in x.description.lower() or query in x.category.lower())
         ]
+        self.count_label.configure(text=f"{len(filtered)} application(s)")
+        for col in range(2):
+            self.content.grid_columnconfigure(col, weight=1, uniform="appcards")
 
-        for index, entry in enumerate(filtered):
+        for index, item in enumerate(filtered):
+            row, col = divmod(index, 2)
             card = Card(self.content)
-            card.pack(fill="x", pady=5)
-            card.grid_columnconfigure(0, weight=1)
+            card.grid(row=row, column=col, sticky="nsew", padx=(0 if col == 0 else 7, 0), pady=6)
+            installed = is_installed(item)
 
-            title = entry.name + ("  ★ Recommended" if entry.recommended else "")
-            tk.Label(card, text=title, bg=COLORS["panel"], fg=COLORS["text"],
-                     font=("DejaVu Sans", 12, "bold")).grid(
-                row=0, column=0, sticky="w", padx=15, pady=(12, 3)
-            )
-            tk.Label(card, text=entry.category, bg=COLORS["panel"], fg=COLORS["teal"],
-                     font=("DejaVu Sans", 8, "bold")).grid(
-                row=1, column=0, sticky="w", padx=15
-            )
-            tk.Label(card, text=entry.description, bg=COLORS["panel"], fg=COLORS["muted"],
-                     wraplength=700, justify="left", font=("DejaVu Sans", 9)).grid(
-                row=2, column=0, sticky="w", padx=15, pady=(4, 12)
-            )
+            top = tk.Frame(card, bg=COLORS["panel"])
+            top.pack(fill="x", padx=15, pady=(13, 5))
+            tk.Label(top, text=item.name[:2].upper(), bg=COLORS["panel_alt"], fg=COLORS["teal"],
+                     width=4, height=2, font=("DejaVu Sans", 10, "bold")).pack(side="left")
+            title = tk.Frame(top, bg=COLORS["panel"])
+            title.pack(side="left", padx=(10, 0), fill="x", expand=True)
+            tk.Label(title, text=item.name, bg=COLORS["panel"], fg=COLORS["text"],
+                     font=("DejaVu Sans", 12, "bold")).pack(anchor="w")
+            tk.Label(title, text=item.category, bg=COLORS["panel"], fg=COLORS["teal"],
+                     font=("DejaVu Sans", 8, "bold")).pack(anchor="w", pady=(2, 0))
+            tk.Label(top, text="● Installed" if installed else "● Available",
+                     bg=COLORS["panel"], fg=COLORS["success"] if installed else COLORS["warning"],
+                     font=("DejaVu Sans", 8, "bold")).pack(side="right", anchor="n")
 
-            installed = is_installed(entry)
-            tk.Label(card, text="Installed" if installed else "Not installed",
-                     bg=COLORS["panel"],
-                     fg=COLORS["success"] if installed else COLORS["warning"],
-                     font=("DejaVu Sans", 9, "bold")).grid(
-                row=0, column=1, padx=12
+            tk.Label(card, text=item.description, bg=COLORS["panel"], fg=COLORS["muted"],
+                     wraplength=410, justify="left", font=("DejaVu Sans", 9)).pack(
+                anchor="w", padx=15, pady=(5, 12)
             )
-
-            label = "Launch" if installed else "Install"
-            command = (
-                lambda e=entry: self.app.launch_application(e)
-                if installed
-                else lambda e=entry: self.app.install_application(e)
-            )
+            buttons = tk.Frame(card, bg=COLORS["panel"])
+            buttons.pack(fill="x", padx=15, pady=(0, 13))
             if installed:
-                callback = lambda e=entry: self.app.launch_application(e)
+                action_button(buttons, "Launch", lambda e=item: self.app.launch_application(e), small=True).pack(side="left")
+                action_button(buttons, "Update", lambda e=item: self.app.package_action("update", e), small=True, secondary=True).pack(side="left", padx=(6, 0))
+                action_button(buttons, "Repair", lambda e=item: self.app.package_action("repair", e), small=True, secondary=True).pack(side="left", padx=(6, 0))
+                action_button(buttons, "Remove", lambda e=item: self.app.package_action("remove", e), small=True, secondary=True).pack(side="left", padx=(6, 0))
             else:
-                callback = lambda e=entry: self.app.install_application(e)
-
-            button = action_button(card, label, callback, small=True)
-            button.grid(row=0, column=2, rowspan=3, padx=(0, 15), pady=12)
-            ToolTip(button, f"{label} {entry.name}.")
+                action_button(buttons, "Install", lambda e=item: self.app.install_application(e), small=True).pack(side="left")
+            if item.recommended:
+                tk.Label(buttons, text="★ Recommended", bg=COLORS["panel"], fg=COLORS["blue"],
+                         font=("DejaVu Sans", 8, "bold")).pack(side="right")

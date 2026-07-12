@@ -1,0 +1,162 @@
+[
+  {
+    "name": "WSJT-X",
+    "category": "Digital Modes",
+    "command": "wsjtx",
+    "package": "wsjtx",
+    "description": "FT8, FT4, JT65 and other weak-signal operating modes.",
+    "recommended": true
+  },
+  {
+    "name": "FLDigi",
+    "category": "Digital Modes",
+    "command": "fldigi",
+    "package": "fldigi",
+    "description": "Multi-mode digital modem for many keyboard-based radio modes.",
+    "recommended": true
+  },
+  {
+    "name": "JS8Call",
+    "category": "Digital Modes",
+    "command": "js8call",
+    "package": "js8call",
+    "description": "Keyboard messaging and weak-signal communication using JS8 modulation.",
+    "recommended": false
+  },
+  {
+    "name": "FreeDV",
+    "category": "Digital Voice",
+    "command": "freedv",
+    "package": "freedv",
+    "description": "Open-source digital voice application for HF radio.",
+    "recommended": false
+  },
+  {
+    "name": "CHIRP",
+    "category": "Radio Programming",
+    "command": "chirp",
+    "package": "chirp",
+    "description": "Program memories and settings in supported amateur radios.",
+    "recommended": true
+  },
+  {
+    "name": "GQRX",
+    "category": "SDR",
+    "command": "gqrx",
+    "package": "gqrx-sdr",
+    "description": "General-purpose software-defined radio receiver.",
+    "recommended": true
+  },
+  {
+    "name": "GNU Radio Companion",
+    "category": "SDR",
+    "command": "gnuradio-companion",
+    "package": "gnuradio",
+    "description": "Graphical environment for building software-defined radio systems.",
+    "recommended": false
+  },
+  {
+    "name": "CubicSDR",
+    "category": "SDR",
+    "command": "CubicSDR",
+    "package": "cubicsdr",
+    "description": "Cross-platform SDR receiver with a modern visual interface.",
+    "recommended": false
+  },
+  {
+    "name": "RTL-SDR Utilities",
+    "category": "SDR",
+    "command": "rtl_test",
+    "package": "rtl-sdr",
+    "description": "Command-line tools and drivers for RTL2832-based SDR receivers.",
+    "recommended": true
+  },
+  {
+    "name": "Dire Wolf",
+    "category": "Packet & APRS",
+    "command": "direwolf",
+    "package": "direwolf",
+    "description": "Software TNC for packet radio and APRS.",
+    "recommended": true
+  },
+  {
+    "name": "Xastir",
+    "category": "Packet & APRS",
+    "command": "xastir",
+    "package": "xastir",
+    "description": "APRS mapping, messaging and station tracking.",
+    "recommended": false
+  },
+  {
+    "name": "Soundmodem",
+    "category": "Packet & APRS",
+    "command": "soundmodem",
+    "package": "soundmodem",
+    "description": "Software packet-radio modem using a computer sound card.",
+    "recommended": false
+  },
+  {
+    "name": "GPredict",
+    "category": "Satellite",
+    "command": "gpredict",
+    "package": "gpredict",
+    "description": "Real-time satellite tracking and pass prediction.",
+    "recommended": true
+  },
+  {
+    "name": "QSSTV",
+    "category": "Images",
+    "command": "qsstv",
+    "package": "qsstv",
+    "description": "Slow-scan television and digital image reception.",
+    "recommended": false
+  },
+  {
+    "name": "CQRLOG",
+    "category": "Logging",
+    "command": "cqrlog",
+    "package": "cqrlog",
+    "description": "Amateur-radio logging application with online lookup support.",
+    "recommended": true
+  },
+  {
+    "name": "Xlog",
+    "category": "Logging",
+    "command": "xlog",
+    "package": "xlog",
+    "description": "Lightweight amateur-radio station logbook.",
+    "recommended": false
+  },
+  {
+    "name": "Hamlib Utilities",
+    "category": "Radio Control",
+    "command": "rigctl",
+    "package": "libhamlib-utils",
+    "description": "Radio and rotator control command-line tools.",
+    "recommended": true
+  },
+  {
+    "name": "GridTracker",
+    "category": "Digital Modes",
+    "command": "gridtracker",
+    "package": "gridtracker",
+    "description": "Live mapping and logging companion for WSJT-X and JTDX.",
+    "recommended": false
+  },
+  {
+    "name": "Morse Decoder",
+    "category": "CW",
+    "command": "xdemorse",
+    "package": "xdemorse",
+    "description": "Graphical Morse-code decoding application.",
+    "recommended": false
+  },
+  {
+    "name": "CWCP",
+    "category": "CW",
+    "command": "cwcp",
+    "package": "cwcp",
+    "description": "Morse-code tutor and practice program.",
+    "recommended": false
+  }
+]

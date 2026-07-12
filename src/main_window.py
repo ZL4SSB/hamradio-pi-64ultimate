@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import shutil
 import subprocess
 import tkinter as tk
@@ -10,7 +9,10 @@ from constants import APP_NAME, APP_VERSION, COLORS
 from pages.applications_page import ApplicationsPage
 from pages.dashboard_page import DashboardPage
 from pages.hardware_page import HardwarePage
-from pages.simple_pages import HelpPage, PropagationPage, SettingsPage, UpdatesPage
+from pages.help_page import HelpPage
+from pages.propagation_page import PropagationPage
+from pages.settings_page import SettingsPage
+from pages.updates_page import UpdatesPage
 from pages.wpsd_page import WPSDPage
 from services.command_service import CommandRunner
 
@@ -19,8 +21,8 @@ class MainWindow(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title(f"{APP_NAME} — Ham Shack Control Centre")
-        self.geometry("1180x760")
-        self.minsize(980, 640)
+        self.geometry("1240x800")
+        self.minsize(1024, 680)
         self.configure(bg=COLORS["background"])
         self.option_add("*Font", ("DejaVu Sans", 10))
 
@@ -28,6 +30,7 @@ class MainWindow(tk.Tk):
         self.runner = CommandRunner(self, self.log)
         self.pages = {}
         self.nav_buttons = {}
+        self.nav_stripes = {}
         self.current_page = ""
 
         self._build_shell()
@@ -40,12 +43,19 @@ class MainWindow(tk.Tk):
             style.theme_use("clam")
         except tk.TclError:
             pass
+
         style.configure(
             "TCombobox",
             fieldbackground=COLORS["panel_alt"],
             background=COLORS["panel_alt"],
             foreground=COLORS["text"],
             arrowcolor=COLORS["text"],
+            bordercolor=COLORS["border"],
+        )
+        style.map(
+            "TCombobox",
+            fieldbackground=[("readonly", COLORS["panel_alt"])],
+            foreground=[("readonly", COLORS["text"])],
         )
         style.configure(
             "Vertical.TScrollbar",
@@ -56,58 +66,144 @@ class MainWindow(tk.Tk):
         )
 
     def _build_shell(self) -> None:
-        sidebar = tk.Frame(self, bg=COLORS["sidebar"], width=230)
+        sidebar = tk.Frame(self, bg=COLORS["sidebar"], width=244)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
 
         brand = tk.Frame(sidebar, bg=COLORS["sidebar"])
-        brand.pack(fill="x", padx=17, pady=(20, 17))
-        tk.Label(brand, text="HamRadio-Pi", bg=COLORS["sidebar"], fg=COLORS["text"],
-                 font=("DejaVu Sans", 16, "bold")).pack(anchor="w")
-        tk.Label(brand, text="ULTIMATE", bg=COLORS["sidebar"], fg=COLORS["teal"],
-                 font=("DejaVu Sans", 12, "bold")).pack(anchor="w")
-        tk.Label(brand, text="Ham Shack Control Centre", bg=COLORS["sidebar"], fg=COLORS["muted"],
-                 font=("DejaVu Sans", 8)).pack(anchor="w", pady=(3, 0))
+        brand.pack(fill="x", padx=18, pady=(20, 16))
+
+        logo = tk.Label(
+            brand,
+            text="HR",
+            bg=COLORS["teal_dark"],
+            fg="white",
+            width=3,
+            height=1,
+            font=("DejaVu Sans", 15, "bold"),
+        )
+        logo.pack(side="left")
+
+        brand_text = tk.Frame(brand, bg=COLORS["sidebar"])
+        brand_text.pack(side="left", padx=(11, 0))
+        tk.Label(
+            brand_text,
+            text="HamRadio-Pi",
+            bg=COLORS["sidebar"],
+            fg=COLORS["text"],
+            font=("DejaVu Sans", 15, "bold"),
+        ).pack(anchor="w")
+        tk.Label(
+            brand_text,
+            text="ULTIMATE",
+            bg=COLORS["sidebar"],
+            fg=COLORS["teal"],
+            font=("DejaVu Sans", 10, "bold"),
+        ).pack(anchor="w")
+
+        tk.Frame(sidebar, bg=COLORS["border"], height=1).pack(fill="x", padx=14, pady=(0, 10))
 
         items = [
-            ("Dashboard", "⌂"),
-            ("Applications", "▦"),
-            ("WPSD Centre", "◉"),
-            ("Hardware", "⌁"),
-            ("Propagation", "≋"),
-            ("Updates", "↻"),
-            ("Settings", "⚙"),
-            ("Help & Logs", "?"),
+            ("Dashboard", "⌂", "System overview and live status"),
+            ("Applications", "▦", "Install and manage radio software"),
+            ("WPSD Centre", "◉", "WPSD SD-card and hotspot tools"),
+            ("Hardware", "⌁", "Detect radios, SDRs and interfaces"),
+            ("Propagation", "≋", "Solar and HF propagation tools"),
+            ("Updates", "↻", "Check project update status"),
+            ("Settings", "⚙", "Station and application settings"),
+            ("Help & Logs", "?", "Command output and troubleshooting"),
         ]
-        for name, icon in items:
-            button = tk.Button(
-                sidebar, text=f"  {icon}   {name}", anchor="w",
-                bg=COLORS["sidebar"], fg=COLORS["text"],
-                activebackground=COLORS["teal_dark"], activeforeground="white",
-                relief="flat", bd=0, padx=13, pady=11, cursor="hand2",
-                command=lambda page=name: self.show_page(page)
-            )
-            button.pack(fill="x", padx=10, pady=2)
-            self.nav_buttons[name] = button
 
-        tk.Label(sidebar, text=f"Version {APP_VERSION}", bg=COLORS["sidebar"],
-                 fg=COLORS["muted"], font=("DejaVu Sans", 8)).pack(
-            side="bottom", anchor="w", padx=18, pady=16
-        )
+        for name, icon, tooltip in items:
+            row = tk.Frame(sidebar, bg=COLORS["sidebar"])
+            row.pack(fill="x", padx=8, pady=2)
+
+            stripe = tk.Frame(row, bg=COLORS["sidebar"], width=4)
+            stripe.pack(side="left", fill="y")
+
+            button = tk.Button(
+                row,
+                text=f"  {icon}   {name}",
+                anchor="w",
+                bg=COLORS["sidebar"],
+                fg=COLORS["text"],
+                activebackground=COLORS["sidebar_hover"],
+                activeforeground="white",
+                relief="flat",
+                bd=0,
+                padx=10,
+                pady=11,
+                cursor="hand2",
+                command=lambda page=name: self.show_page(page),
+            )
+            button.pack(side="left", fill="x", expand=True)
+            button.bind("<Enter>", lambda _e, n=name: self._nav_hover(n, True), add="+")
+            button.bind("<Leave>", lambda _e, n=name: self._nav_hover(n, False), add="+")
+            self.nav_buttons[name] = button
+            self.nav_stripes[name] = stripe
+
+        footer = tk.Frame(sidebar, bg=COLORS["sidebar"])
+        footer.pack(side="bottom", fill="x", padx=16, pady=14)
+        tk.Label(
+            footer,
+            text=f"Version {APP_VERSION}",
+            bg=COLORS["sidebar"],
+            fg=COLORS["muted"],
+            font=("DejaVu Sans", 8),
+        ).pack(anchor="w")
+        tk.Label(
+            footer,
+            text="Ham Shack Control Centre",
+            bg=COLORS["sidebar"],
+            fg=COLORS["muted"],
+            font=("DejaVu Sans", 8),
+        ).pack(anchor="w", pady=(2, 0))
 
         main = tk.Frame(self, bg=COLORS["background"])
         main.pack(side="left", fill="both", expand=True)
 
+        topbar = tk.Frame(main, bg=COLORS["background_alt"], height=48)
+        topbar.pack(fill="x")
+        topbar.pack_propagate(False)
+
+        self.page_title_var = tk.StringVar(value="Dashboard")
+        tk.Label(
+            topbar,
+            textvariable=self.page_title_var,
+            bg=COLORS["background_alt"],
+            fg=COLORS["text"],
+            font=("DejaVu Sans", 11, "bold"),
+        ).pack(side="left", padx=18)
+
+        self.connection_label = tk.Label(
+            topbar,
+            text="● Ready",
+            bg=COLORS["background_alt"],
+            fg=COLORS["success"],
+            font=("DejaVu Sans", 9, "bold"),
+        )
+        self.connection_label.pack(side="right", padx=18)
+
         host = tk.Frame(main, bg=COLORS["background"])
         host.pack(fill="both", expand=True)
 
-        status = tk.Frame(main, bg="#09111B")
+        status = tk.Frame(main, bg="#08111A")
         status.pack(fill="x", side="bottom")
         self.status_var = tk.StringVar(value="Ready")
-        tk.Label(status, textvariable=self.status_var, bg="#09111B", fg=COLORS["muted"],
-                 font=("DejaVu Sans", 8)).pack(side="left", padx=13, pady=7)
-        tk.Label(status, text="73 mate!", bg="#09111B", fg=COLORS["success"],
-                 font=("DejaVu Sans", 8, "bold")).pack(side="right", padx=13, pady=7)
+        tk.Label(
+            status,
+            textvariable=self.status_var,
+            bg="#08111A",
+            fg=COLORS["muted"],
+            font=("DejaVu Sans", 8),
+        ).pack(side="left", padx=13, pady=7)
+        tk.Label(
+            status,
+            text="73 mate!",
+            bg="#08111A",
+            fg=COLORS["success"],
+            font=("DejaVu Sans", 8, "bold"),
+        ).pack(side="right", padx=13, pady=7)
 
         self.dashboard = DashboardPage(host, self)
         page_map = {
@@ -125,14 +221,28 @@ class MainWindow(tk.Tk):
             page.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.pages[name] = page
 
+    def _nav_hover(self, name: str, entering: bool) -> None:
+        if name == self.current_page:
+            return
+        self.nav_buttons[name].configure(
+            bg=COLORS["sidebar_hover"] if entering else COLORS["sidebar"]
+        )
+
     def show_page(self, name: str) -> None:
         self.current_page = name
+        self.page_title_var.set(name)
         self.pages[name].tkraise()
+
         for page_name, button in self.nav_buttons.items():
+            active = page_name == name
             button.configure(
-                bg=COLORS["teal_dark"] if page_name == name else COLORS["sidebar"],
-                fg="white" if page_name == name else COLORS["text"],
+                bg=COLORS["sidebar_hover"] if active else COLORS["sidebar"],
+                fg="white" if active else COLORS["text"],
             )
+            self.nav_stripes[page_name].configure(
+                bg=COLORS["teal"] if active else COLORS["sidebar"]
+            )
+
         self.set_status(name)
 
     def set_status(self, text: str) -> None:
@@ -146,8 +256,7 @@ class MainWindow(tk.Tk):
 
     def open_hardware_scan(self) -> None:
         self.show_page("Hardware")
-        page = self.pages["Hardware"]
-        page.scan()
+        self.pages["Hardware"].scan()
 
     def launch_application(self, entry) -> None:
         try:
@@ -171,6 +280,32 @@ class MainWindow(tk.Tk):
         self.show_page("Help & Logs")
         self.log("$ " + " ".join(command))
         self.runner.run(command, lambda rc: self._install_finished(entry.name, rc))
+
+    def package_action(self, action: str, entry) -> None:
+        from services.settings_service import load_settings
+        verbs = {
+            "update": ("update", ["install", "--only-upgrade", "-y", entry.package]),
+            "repair": ("repair", ["install", "--reinstall", "-y", entry.package]),
+            "remove": ("remove", ["remove", "-y", entry.package]),
+        }
+        label, apt_args = verbs[action]
+        if action == "remove" and load_settings().get("confirm_remove", True):
+            if not messagebox.askyesno(APP_NAME, f"Remove {entry.name}?\n\nPackage: {entry.package}"):
+                return
+        command = ["pkexec", "apt-get", *apt_args]
+        if shutil.which("pkexec") is None:
+            command = ["sudo", "apt-get", *apt_args]
+        self.show_page("Help & Logs")
+        self.log("$ " + " ".join(command))
+        self.runner.run(command, lambda rc: self._package_finished(entry.name, label, rc))
+
+    def _package_finished(self, name: str, action: str, return_code: int) -> None:
+        if return_code == 0:
+            messagebox.showinfo(APP_NAME, f"{name}: {action} completed.")
+            self.set_status(f"{name}: {action} completed")
+        else:
+            messagebox.showerror(APP_NAME, f"{name}: {action} failed. Check Help & Logs.")
+            self.set_status(f"{name}: {action} failed")
 
     def _install_finished(self, name: str, return_code: int) -> None:
         if return_code == 0:
