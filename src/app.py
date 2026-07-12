@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-
-import tkinter as tk
-from dashboard import HamRadioPiUltimate
+from main_window import MainWindow
 
 
-def main() -> None:
-    root = tk.Tk()
-    HamRadioPiUltimate(root)
-    root.mainloop()
+def main() -> int:
+    app = MainWindow()
+    app.mainloop()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

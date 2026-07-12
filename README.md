@@ -1,27 +1,40 @@
-# HamRadio-Pi Ultimate v0.4.0 — Modern UI Foundation
+# HamRadio-Pi Ultimate modern GUI drop-in
 
-Adds a dark modern dashboard, card-style panels, improved spacing and typography, accent buttons, and hover tooltips for every dashboard action.
+This package supplies the first working version of the redesigned single-window
+application.
 
-Replace or add:
+It does not replace or modify the existing installer and WPSD shell scripts.
+Copy the included `src/app.py` and `data/applications.json` into the repository.
 
-```text
-src/ui/__init__.py
-src/ui/theme.py
-src/ui/tooltip.py
-src/dashboard.py
-config/version.json
+## Test on Raspberry Pi
+
+```bash
+cd ~/hamradio-pi-64ultimate
+chmod +x src/app.py
+python3 src/app.py
 ```
 
-Test:
+The GUI uses Tkinter from the Python standard library. If Raspberry Pi OS says
+Tkinter is missing:
 
-```powershell
-python src/app.py
+```bash
+sudo apt update
+sudo apt install -y python3-tk
 ```
 
-Commit:
+## Included features
 
-```powershell
-git add src/ui src/dashboard.py config/version.json
-git commit -m "Add modern dashboard theme and tooltips"
-git push
-```
+- Single resizable window
+- Left navigation sidebar
+- Dark teal theme
+- Hover tooltips
+- Dashboard and activity log
+- Application catalogue with install/launch state
+- WPSD script launcher
+- Read-only hardware detection
+- Git update status page
+- Settings storage
+- Propagation-page foundation
+- Background workers to avoid frozen windows
+
+Version: 0.4.0-dev

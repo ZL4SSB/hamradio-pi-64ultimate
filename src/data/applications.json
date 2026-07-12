@@ -1,58 +1,98 @@
-{
-  "applications": [
-    {
-      "name": "WSJT-X",
-      "package": "wsjtx",
-      "category": "Digital Modes",
-      "activity": "FT8 / FT4",
-      "recommended": true,
-      "gui": true,
-      "description": "Weak-signal digital communication."
-    },
-    {
-      "name": "JS8Call",
-      "package": "js8call",
-      "category": "Digital Modes",
-      "activity": "Keyboard Chat",
-      "recommended": true,
-      "gui": true,
-      "description": "Keyboard messaging using the JS8 waveform."
-    },
-    {
-      "name": "FLDIGI",
-      "package": "fldigi",
-      "category": "Digital Modes",
-      "activity": "RTTY / PSK",
-      "recommended": true,
-      "gui": true,
-      "description": "Multi-mode digital communications."
-    },
-    {
-      "name": "GQRX",
-      "package": "gqrx-sdr",
-      "category": "SDR",
-      "activity": "Software Defined Radio",
-      "recommended": true,
-      "gui": true,
-      "description": "Software-defined radio receiver."
-    },
-    {
-      "name": "Gpredict",
-      "package": "gpredict",
-      "category": "Satellite",
-      "activity": "Satellite Tracking",
-      "recommended": true,
-      "gui": true,
-      "description": "Satellite tracking and Doppler prediction."
-    },
-    {
-      "name": "CHIRP",
-      "package": "chirp",
-      "category": "Programming",
-      "activity": "Radio Programming",
-      "recommended": true,
-      "gui": true,
-      "description": "Program supported amateur radios."
-    }
-  ]
-}
+[
+  {
+    "name": "WSJT-X",
+    "category": "Digital Modes",
+    "command": "wsjtx",
+    "package": "wsjtx",
+    "description": "FT8, FT4, JT65 and other weak-signal modes.",
+    "recommended": true
+  },
+  {
+    "name": "FLDigi",
+    "category": "Digital Modes",
+    "command": "fldigi",
+    "package": "fldigi",
+    "description": "Multi-mode digital modem for many keyboard modes.",
+    "recommended": true
+  },
+  {
+    "name": "JS8Call",
+    "category": "Digital Modes",
+    "command": "js8call",
+    "package": "js8call",
+    "description": "Keyboard messaging using JS8 modulation.",
+    "recommended": false
+  },
+  {
+    "name": "CHIRP",
+    "category": "Radio Programming",
+    "command": "chirp",
+    "package": "chirp",
+    "description": "Program memories and settings in supported radios.",
+    "recommended": true
+  },
+  {
+    "name": "GQRX",
+    "category": "SDR",
+    "command": "gqrx",
+    "package": "gqrx-sdr",
+    "description": "General-purpose software-defined radio receiver.",
+    "recommended": true
+  },
+  {
+    "name": "GNU Radio Companion",
+    "category": "SDR",
+    "command": "gnuradio-companion",
+    "package": "gnuradio",
+    "description": "Graphical environment for building software-defined radios.",
+    "recommended": false
+  },
+  {
+    "name": "Dire Wolf",
+    "category": "Packet & APRS",
+    "command": "direwolf",
+    "package": "direwolf",
+    "description": "Software TNC for packet radio and APRS.",
+    "recommended": true
+  },
+  {
+    "name": "Xastir",
+    "category": "Packet & APRS",
+    "command": "xastir",
+    "package": "xastir",
+    "description": "APRS mapping and station tracking.",
+    "recommended": false
+  },
+  {
+    "name": "GPredict",
+    "category": "Satellite",
+    "command": "gpredict",
+    "package": "gpredict",
+    "description": "Satellite tracking and pass prediction.",
+    "recommended": true
+  },
+  {
+    "name": "QSSTV",
+    "category": "Images",
+    "command": "qsstv",
+    "package": "qsstv",
+    "description": "Slow-scan television and digital image reception.",
+    "recommended": false
+  },
+  {
+    "name": "CQRLOG",
+    "category": "Logging",
+    "command": "cqrlog",
+    "package": "cqrlog",
+    "description": "Amateur-radio logging application.",
+    "recommended": true
+  },
+  {
+    "name": "Hamlib Utilities",
+    "category": "Radio Control",
+    "command": "rigctl",
+    "package": "libhamlib-utils",
+    "description": "Radio and rotator control command-line tools.",
+    "recommended": true
+  }
+]
