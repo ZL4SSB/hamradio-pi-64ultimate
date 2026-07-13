@@ -100,10 +100,14 @@ install_available_packages \
     python3-pyqt6 \
     python3-pyqt6.qtquick \
     python3-pyqt6.qtsvg \
+    python3-pyqt6.qtwebengine \
     qml6-module-qtquick \
     qml6-module-qtquick-controls \
     qml6-module-qtquick-layouts \
     qml6-module-qtquick-window \
+    qml6-module-qtwebengine \
+    qml6-module-qtwebengine-controlsdelegates \
+    qml6-module-qtquick-dialogs \
     qml6-module-qtquick-templates \
     qml6-module-qtqml \
     qt6-image-formats-plugins \
@@ -126,9 +130,11 @@ step "Verifying Python, Qt and QML"
 if ! python3 - <<'PY'
 from PyQt6.QtCore import QT_VERSION_STR, PYQT_VERSION_STR
 from PyQt6.QtQml import QQmlApplicationEngine
+from PyQt6.QtWebEngineQuick import QtWebEngineQuick
 print("Qt version:", QT_VERSION_STR)
 print("PyQt version:", PYQT_VERSION_STR)
 print("Qt QML support: OK")
+print("Qt WebEngine support: OK")
 PY
 then
     fail "PyQt6 or Qt Quick could not be imported."

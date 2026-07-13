@@ -1,4 +1,4 @@
-# HamRadio-Pi Ultimate 4.3.2
+# HamRadio-Pi Ultimate 4.4.0
 
 One-click Raspberry Pi test release.
 
@@ -46,3 +46,37 @@ hamradio-pi-ultimate
 cd ~/hamradio-pi-64ultimate
 ./scripts/update-public.sh
 ```
+
+
+## Radio Dashboards
+
+Embedded EuroNode/MMDVM/Pi-Star/WPSD dashboard viewer with saved URLs, navigation, testing, zoom and external-browser support.
+
+
+## 4.4.2 visual fixes
+
+- removed duplicate top-right window buttons
+- moved and resized the dashboard logo
+- increased spacing between CPU, load and disk widgets
+- improved label and field contrast throughout Preferences
+- made checkbox text clearly visible
+- moved Station Profile inputs left
+- improved Station Profile label, placeholder and typed-text readability
+
+
+## 4.5.0 — Operational Propagation page
+
+The Propagation menu is now functional and downloads live data from the NOAA
+Space Weather Prediction Center.
+
+Displayed values:
+
+- 10.7 cm solar radio flux
+- Planetary Kp index
+- Solar-wind speed and density
+- Interplanetary magnetic-field Bz
+- GOES X-ray class
+- Geomagnetic activity description
+- Estimated conditions for 160–10 metres
+
+Data refreshes every five minutes and can also be refreshed manually.

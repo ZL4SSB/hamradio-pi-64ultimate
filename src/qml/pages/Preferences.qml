@@ -1,18 +1,19 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 
 Item {
     Flickable {
         anchors.fill: parent
         contentWidth: width
-        contentHeight: preferencesColumn.implicitHeight + 20
+        contentHeight: preferencesColumn.implicitHeight + 24
         clip: true
 
         ColumnLayout {
             id: preferencesColumn
             width: parent.width
-            spacing: 14
+            spacing: 16
 
             Text {
                 text: "Preferences"
@@ -23,27 +24,27 @@ Item {
 
             Text {
                 text: "Application appearance, startup and automatic actions."
-                color: "#95ACB9"
+                color: "#B8C9D2"
                 font.pixelSize: 14
             }
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: 2
-                columnSpacing: 10
-                rowSpacing: 10
+                columns: width >= 900 ? 2 : 1
+                columnSpacing: 14
+                rowSpacing: 14
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 250
+                    implicitHeight: 270
                     radius: 10
                     color: "#10212C"
-                    border.color: "#294A5A"
+                    border.color: "#365E70"
 
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 18
-                        spacing: 13
+                        anchors.margins: 20
+                        spacing: 14
 
                         Text {
                             text: "Appearance"
@@ -52,8 +53,14 @@ Item {
                             font.bold: true
                         }
 
-                        Label { text: "Theme" }
-                        ComboBox {
+                        Text {
+                            text: "Theme"
+                            color: "#DCE8EE"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        DarkComboBox {
                             id: themeBox
                             Layout.fillWidth: true
                             model: ["Dark", "Teal Dark", "High Contrast"]
@@ -63,8 +70,9 @@ Item {
                             }
                         }
 
-                        CheckBox {
+                        DarkCheckBox {
                             id: splashCheck
+                            Layout.fillWidth: true
                             text: "Show splash screen"
                             checked: backend.showSplash
                         }
@@ -75,15 +83,15 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 250
+                    implicitHeight: 270
                     radius: 10
                     color: "#10212C"
-                    border.color: "#294A5A"
+                    border.color: "#365E70"
 
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 18
-                        spacing: 13
+                        anchors.margins: 20
+                        spacing: 14
 
                         Text {
                             text: "Startup"
@@ -92,22 +100,25 @@ Item {
                             font.bold: true
                         }
 
-                        CheckBox {
+                        DarkCheckBox {
                             id: scanCheck
+                            Layout.fillWidth: true
                             text: "Scan hardware at startup"
                             checked: backend.autoScan
                         }
 
-                        CheckBox {
+                        DarkCheckBox {
                             id: updateCheck
+                            Layout.fillWidth: true
                             text: "Check for updates at startup"
                             checked: backend.checkUpdates
                         }
 
                         Text {
                             Layout.fillWidth: true
-                            text: "Startup preferences are stored locally and will be used on Raspberry Pi OS."
-                            color: "#95ACB9"
+                            text: "These settings are stored locally and used automatically on Raspberry Pi OS."
+                            color: "#B8C9D2"
+                            font.pixelSize: 13
                             wrapMode: Text.WordWrap
                         }
 
@@ -117,15 +128,15 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 210
+                    implicitHeight: 260
                     radius: 10
                     color: "#10212C"
-                    border.color: "#294A5A"
+                    border.color: "#365E70"
 
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 18
-                        spacing: 12
+                        anchors.margins: 20
+                        spacing: 11
 
                         Text {
                             text: "Hardware defaults"
@@ -134,34 +145,55 @@ Item {
                             font.bold: true
                         }
 
-                        TextField {
-                            Layout.fillWidth: true
-                            placeholderText: "Default CAT port"
+                        Text {
+                            text: "Default CAT port"
+                            color: "#DCE8EE"
+                            font.pixelSize: 13
+                            font.bold: true
                         }
 
-                        TextField {
+                        DarkTextField {
                             Layout.fillWidth: true
-                            placeholderText: "Default audio device"
+                            placeholderText: "Example: /dev/ttyUSB0"
                         }
 
-                        TextField {
+                        Text {
+                            text: "Default audio device"
+                            color: "#DCE8EE"
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+
+                        DarkTextField {
                             Layout.fillWidth: true
-                            placeholderText: "Preferred SDR"
+                            placeholderText: "Example: USB Audio CODEC"
+                        }
+
+                        Text {
+                            text: "Preferred SDR"
+                            color: "#DCE8EE"
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+
+                        DarkTextField {
+                            Layout.fillWidth: true
+                            placeholderText: "Example: RTL-SDR"
                         }
                     }
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 210
+                    implicitHeight: 260
                     radius: 10
                     color: "#10212C"
-                    border.color: "#294A5A"
+                    border.color: "#365E70"
 
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 18
-                        spacing: 12
+                        anchors.margins: 20
+                        spacing: 14
 
                         Text {
                             text: "Updates"
@@ -170,32 +202,109 @@ Item {
                             font.bold: true
                         }
 
-                        ComboBox {
+                        Text {
+                            text: "Update channel"
+                            color: "#DCE8EE"
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+
+                        DarkComboBox {
                             Layout.fillWidth: true
                             model: ["Stable channel", "Preview channel"]
                         }
 
-                        CheckBox {
-                            text: "Create backup before updates"
+                        DarkCheckBox {
+                            Layout.fillWidth: true
+                            text: "Create a backup before updates"
                             checked: true
                         }
 
                         Text {
-                            text: "Current application version: " + backend.appVersion
-                            color: "#95ACB9"
+                            text: "Current version: " + backend.appVersion
+                            color: "#B8C9D2"
+                            font.pixelSize: 13
+                        }
+
+                        Item { Layout.fillHeight: true }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 270
+                    radius: 10
+                    color: "#10212C"
+                    border.color: "#365E70"
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 20
+                        spacing: 12
+
+                        Text {
+                            text: "HamClock"
+                            color: "#F4F8FA"
+                            font.pixelSize: 18
+                            font.bold: true
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "HamClock opens in your normal browser for full-screen viewing."
+                            color: "#B8C9D2"
+                            font.pixelSize: 13
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Text {
+                            text: "HamClock URL"
+                            color: "#DCE8EE"
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+
+                        DarkTextField {
+                            id: hamClockUrlField
+                            Layout.fillWidth: true
+                            text: backend.hamClockUrl
+                            placeholderText: "Example: http://hamclock.local/"
+                            selectByMouse: true
+                        }
+
+                        RowLayout {
+                            spacing: 10
+
+                            Button {
+                                text: "Test"
+                                onClicked: backend.testWebUrl(hamClockUrlField.text)
+                            }
+
+                            Button {
+                                text: "Open"
+                                onClicked: backend.openHamClock()
+                            }
+
+                            Item { Layout.fillWidth: true }
                         }
                     }
                 }
             }
 
             Button {
+                Layout.alignment: Qt.AlignLeft
                 text: "Save Preferences"
                 onClicked: backend.savePreferences(
                     themeBox.currentText,
                     splashCheck.checked,
                     scanCheck.checked,
-                    updateCheck.checked
+                    updateCheck.checked,
+                    hamClockUrlField.text
                 )
+            }
+
+            Item {
+                Layout.preferredHeight: 12
             }
         }
     }

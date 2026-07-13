@@ -18,6 +18,7 @@ ApplicationWindow {
         ["Dashboard", "⌂"],
         ["Applications", "▦"],
         ["Hardware Manager", "⌁"],
+        ["Radio Dashboards", "▤"],
         ["WPSD Centre", "▣"],
         ["Propagation", "☀"],
         ["Station Profile", "♙"],
@@ -64,22 +65,19 @@ ApplicationWindow {
 
                 Item { Layout.fillWidth: true }
 
-                Text {
-                    text: "—"
-                    color: "#D7E3E9"
-                    font.pixelSize: 20
-                }
+                Rectangle {
+                    radius: 8
+                    color: backend.online ? "#0A482C" : "#4A3A0A"
+                    implicitWidth: 118
+                    implicitHeight: 34
 
-                Text {
-                    text: "□"
-                    color: "#D7E3E9"
-                    font.pixelSize: 20
-                }
-
-                Text {
-                    text: "×"
-                    color: "#D7E3E9"
-                    font.pixelSize: 24
+                    Text {
+                        anchors.centerIn: parent
+                        text: backend.online ? "System Ready" : "Local Mode"
+                        color: backend.online ? "#9AF176" : "#F0C76D"
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
                 }
             }
         }
@@ -177,6 +175,7 @@ ApplicationWindow {
                     case "Dashboard": return dashboard
                     case "Applications": return applications
                     case "Hardware": return hardware
+                    case "Radio Dashboards": return radioDashboards
                     case "Station Profile": return station
                     case "Preferences": return preferences
                     case "WPSD Centre": return wpsd
@@ -195,6 +194,7 @@ ApplicationWindow {
     Component { id: dashboard; Dashboard {} }
     Component { id: applications; Applications {} }
     Component { id: hardware; Hardware {} }
+    Component { id: radioDashboards; RadioDashboards {} }
     Component { id: station; Station {} }
     Component { id: preferences; Preferences {} }
 
@@ -216,23 +216,7 @@ ApplicationWindow {
         }
     }
 
-    Component {
-        id: propagation
-        Generic {
-            pageTitle: "Propagation"
-            pageSubtitle: "Solar, geomagnetic and HF band-condition information."
-            cards: [
-                "Solar Flux",
-                "K Index",
-                "A Index",
-                "X-Ray",
-                "Sunspots",
-                "Solar Wind",
-                "Band Conditions",
-                "Greyline"
-            ]
-        }
-    }
+    Component { id: propagation; Propagation {} }
 
     Component {
         id: updates

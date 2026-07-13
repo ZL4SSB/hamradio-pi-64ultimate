@@ -1,18 +1,19 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 
 Item {
     Flickable {
         anchors.fill: parent
         contentWidth: width
-        contentHeight: profileColumn.implicitHeight + 20
+        contentHeight: profileColumn.implicitHeight + 24
         clip: true
 
         ColumnLayout {
             id: profileColumn
             width: parent.width
-            spacing: 14
+            spacing: 16
 
             Text {
                 text: "Station Profile"
@@ -23,124 +24,219 @@ Item {
 
             Text {
                 text: "Your amateur-radio station identity and radio service IDs."
-                color: "#95ACB9"
+                color: "#B8C9D2"
                 font.pixelSize: 14
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 455
+                implicitHeight: 500
                 radius: 10
                 color: "#10212C"
-                border.color: "#294A5A"
-
-                GridLayout {
-                    anchors.fill: parent
-                    anchors.margins: 22
-                    columns: 2
-                    columnSpacing: 22
-                    rowSpacing: 15
-
-                    Label { text: "Callsign" }
-                    TextField {
-                        id: callsignField
-                        Layout.fillWidth: true
-                        text: backend.callsign === "Not configured" ? "" : backend.callsign
-                        placeholderText: "Example: ZL4SSB"
-                    }
-
-                    Label { text: "Maidenhead locator" }
-                    TextField {
-                        id: locatorField
-                        Layout.fillWidth: true
-                        text: backend.locator === "Not configured" ? "" : backend.locator
-                        placeholderText: "Example: RE54"
-                    }
-
-                    Label { text: "Operator name" }
-                    TextField {
-                        id: operatorField
-                        Layout.fillWidth: true
-                        text: backend.operatorName
-                    }
-
-                    Label { text: "QTH" }
-                    TextField {
-                        id: qthField
-                        Layout.fillWidth: true
-                        text: backend.qth
-                        placeholderText: "Town or region"
-                    }
-
-                    Label { text: "Country" }
-                    TextField {
-                        id: countryField
-                        Layout.fillWidth: true
-                        text: backend.country
-                    }
-
-                    Label { text: "DMR ID" }
-                    TextField {
-                        id: dmrField
-                        Layout.fillWidth: true
-                        text: backend.dmrId
-                        placeholderText: "Example: 5300378"
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    Button {
-                        text: "Save Station Profile"
-                        onClicked: backend.saveStation(
-                            callsignField.text,
-                            locatorField.text,
-                            operatorField.text,
-                            qthField.text,
-                            countryField.text,
-                            dmrField.text
-                        )
-                    }
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 115
-                radius: 10
-                color: "#0C1B25"
-                border.color: "#294A5A"
+                border.color: "#365E70"
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 18
+                    anchors.margins: 22
+                    spacing: 28
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
+                    GridLayout {
+                        Layout.preferredWidth: Math.min(720, parent.width * 0.68)
+                        Layout.alignment: Qt.AlignTop
+                        columns: 2
+                        columnSpacing: 18
+                        rowSpacing: 16
+
                         Text {
-                            text: "Current station"
-                            color: "#95ACB9"
-                        }
-                        Text {
-                            text: backend.callsign + " · " + backend.locator
-                            color: "#20C6B3"
-                            font.pixelSize: 20
+                            text: "Callsign"
+                            color: "#E3EDF2"
+                            font.pixelSize: 14
                             font.bold: true
+                            Layout.preferredWidth: 155
+                        }
+
+                        DarkTextField {
+                            id: callsignField
+                            Layout.preferredWidth: 430
+                            Layout.maximumWidth: 520
+                            text: backend.callsign === "Not configured" ? "" : backend.callsign
+                            placeholderText: "Example: ZL4SSB"
+                        }
+
+                        Text {
+                            text: "Maidenhead locator"
+                            color: "#E3EDF2"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        DarkTextField {
+                            id: locatorField
+                            Layout.preferredWidth: 430
+                            Layout.maximumWidth: 520
+                            text: backend.locator === "Not configured" ? "" : backend.locator
+                            placeholderText: "Example: RE54"
+                        }
+
+                        Text {
+                            text: "Operator name"
+                            color: "#E3EDF2"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        DarkTextField {
+                            id: operatorField
+                            Layout.preferredWidth: 430
+                            Layout.maximumWidth: 520
+                            text: backend.operatorName === "Not configured" ? "" : backend.operatorName
+                            placeholderText: "Operator name"
+                        }
+
+                        Text {
+                            text: "QTH"
+                            color: "#E3EDF2"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        DarkTextField {
+                            id: qthField
+                            Layout.preferredWidth: 430
+                            Layout.maximumWidth: 520
+                            text: backend.qth === "Not configured" ? "" : backend.qth
+                            placeholderText: "Town or region"
+                        }
+
+                        Text {
+                            text: "Country"
+                            color: "#E3EDF2"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        DarkTextField {
+                            id: countryField
+                            Layout.preferredWidth: 430
+                            Layout.maximumWidth: 520
+                            text: backend.country
+                            placeholderText: "Country"
+                        }
+
+                        Text {
+                            text: "DMR ID"
+                            color: "#E3EDF2"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        DarkTextField {
+                            id: dmrField
+                            Layout.preferredWidth: 430
+                            Layout.maximumWidth: 520
+                            text: backend.dmrId === "Not configured" ? "" : backend.dmrId
+                            placeholderText: "Example: 5300378"
+                        }
+
+                        Item {
+                            Layout.preferredWidth: 155
+                        }
+
+                        Button {
+                            text: "Save Station Profile"
+                            onClicked: backend.saveStation(
+                                callsignField.text,
+                                locatorField.text,
+                                operatorField.text,
+                                qthField.text,
+                                countryField.text,
+                                dmrField.text
+                            )
                         }
                     }
 
-                    ColumnLayout {
-                        Text {
-                            text: backend.operatorName.length > 0
-                                  ? backend.operatorName
-                                  : "Operator not entered"
-                            color: "#F4F8FA"
-                            font.bold: true
-                        }
-                        Text {
-                            text: backend.qth.length > 0
-                                  ? backend.qth
-                                  : "QTH not entered"
-                            color: "#95ACB9"
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        radius: 9
+                        color: "#0B1B25"
+                        border.color: "#294A5A"
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 20
+                            spacing: 12
+
+                            Text {
+                                text: "Current Station"
+                                color: "#18D6D2"
+                                font.pixelSize: 18
+                                font.bold: true
+                            }
+
+                            Text {
+                                text: backend.callsign
+                                color: "#F4F8FA"
+                                font.pixelSize: 25
+                                font.bold: true
+                            }
+
+                            Text {
+                                text: backend.locator
+                                color: "#8DE7DF"
+                                font.pixelSize: 17
+                                font.bold: true
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 1
+                                color: "#294A5A"
+                            }
+
+                            Text {
+                                text: "Operator"
+                                color: "#AFC1CB"
+                                font.pixelSize: 12
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: backend.operatorName
+                                color: "#F4F8FA"
+                                font.pixelSize: 15
+                                font.bold: true
+                                wrapMode: Text.WordWrap
+                            }
+
+                            Text {
+                                text: "QTH"
+                                color: "#AFC1CB"
+                                font.pixelSize: 12
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: backend.qth
+                                color: "#F4F8FA"
+                                font.pixelSize: 15
+                                wrapMode: Text.WordWrap
+                            }
+
+                            Text {
+                                text: "DMR ID"
+                                color: "#AFC1CB"
+                                font.pixelSize: 12
+                            }
+
+                            Text {
+                                text: backend.dmrId
+                                color: "#F4F8FA"
+                                font.pixelSize: 15
+                                font.bold: true
+                            }
+
+                            Item { Layout.fillHeight: true }
                         }
                     }
                 }

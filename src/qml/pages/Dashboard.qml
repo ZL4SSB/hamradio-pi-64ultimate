@@ -60,25 +60,26 @@ Item {
 
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: 252
+                implicitHeight: 270
                 radius: 10
                 color: "#0D202B"
                 border.color: "#285263"
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 20
-                    spacing: 0
+                    anchors.margins: 22
+                    spacing: 18
 
                     ColumnLayout {
-                        Layout.preferredWidth: 365
+                        Layout.preferredWidth: 345
+                        Layout.minimumWidth: 300
                         Layout.fillHeight: true
-                        spacing: 8
+                        spacing: 9
 
                         Text {
                             text: "Station Profile"
                             color: "#18D6D2"
-                            font.pixelSize: 16
+                            font.pixelSize: 17
                             font.bold: true
                         }
 
@@ -102,36 +103,124 @@ Item {
                         color: "#214654"
                     }
 
-                    ColumnLayout {
+                    GridLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        Layout.alignment: Qt.AlignCenter
-                        spacing: 12
+                        columns: 3
+                        columnSpacing: 18
 
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "▣"
-                            color: "#18D6D2"
-                            font.pixelSize: 48
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 150
+                            spacing: 10
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "▣"
+                                color: "#18D6D2"
+                                font.pixelSize: 44
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "CPU Temperature"
+                                color: "#D8E5EC"
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: backend.cpuTemp
+                                color: "#F5F9FB"
+                                font.pixelSize: 28
+                                font.bold: true
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "Normal"
+                                color: "#61DC4C"
+                                font.pixelSize: 13
+                            }
                         }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "CPU Temperature"
-                            color: "#D8E5EC"
-                            font.pixelSize: 14
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 150
+                            spacing: 10
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "◴"
+                                color: "#18D6D2"
+                                font.pixelSize: 44
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "System Load"
+                                color: "#D8E5EC"
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: backend.systemLoad
+                                color: "#F5F9FB"
+                                font.pixelSize: 28
+                                font.bold: true
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.maximumWidth: 180
+                                text: backend.loadDetail
+                                color: "#61DC4C"
+                                font.pixelSize: 12
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                            }
                         }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: backend.cpuTemp
-                            color: "#F5F9FB"
-                            font.pixelSize: 29
-                            font.bold: true
-                        }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "Normal"
-                            color: "#61DC4C"
-                            font.pixelSize: 14
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 165
+                            spacing: 10
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "▤"
+                                color: "#18D6D2"
+                                font.pixelSize: 44
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: "Disk Usage"
+                                color: "#D8E5EC"
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: backend.diskPercent + "%"
+                                color: "#F5F9FB"
+                                font.pixelSize: 28
+                                font.bold: true
+                            }
+
+                            Text {
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.maximumWidth: 190
+                                text: backend.diskDetail
+                                color: "#61DC4C"
+                                font.pixelSize: 12
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                            }
                         }
                     }
 
@@ -141,89 +230,24 @@ Item {
                         color: "#214654"
                     }
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
+                    Item {
+                        Layout.preferredWidth: 245
+                        Layout.minimumWidth: 210
                         Layout.fillHeight: true
-                        spacing: 12
 
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "◴"
-                            color: "#18D6D2"
-                            font.pixelSize: 48
+                        Image {
+                            anchors.centerIn: parent
+                            anchors.horizontalCenterOffset: 8
+                            anchors.verticalCenterOffset: -7
+                            width: Math.min(parent.width - 24, 220)
+                            height: Math.min(parent.height - 30, 208)
+                            source: backend.assetRoot + "/dashboard-wordmark.png"
+                            fillMode: Image.PreserveAspectFit
+                            sourceSize.width: 430
+                            sourceSize.height: 330
+                            smooth: true
+                            mipmap: true
                         }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "System Load"
-                            color: "#D8E5EC"
-                            font.pixelSize: 14
-                        }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: backend.systemLoad
-                            color: "#F5F9FB"
-                            font.pixelSize: 29
-                            font.bold: true
-                        }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: backend.loadDetail
-                            color: "#61DC4C"
-                            font.pixelSize: 13
-                        }
-                    }
-
-                    Rectangle {
-                        Layout.preferredWidth: 1
-                        Layout.fillHeight: true
-                        color: "#214654"
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        spacing: 12
-
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "▤"
-                            color: "#18D6D2"
-                            font.pixelSize: 48
-                        }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: "Disk Usage"
-                            color: "#D8E5EC"
-                            font.pixelSize: 14
-                        }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: backend.diskPercent + "%"
-                            color: "#F5F9FB"
-                            font.pixelSize: 29
-                            font.bold: true
-                        }
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: backend.diskDetail
-                            color: "#61DC4C"
-                            font.pixelSize: 13
-                        }
-                    }
-
-                    Rectangle {
-                        Layout.preferredWidth: 1
-                        Layout.fillHeight: true
-                        color: "#214654"
-                    }
-
-                    Image {
-                        Layout.preferredWidth: 270
-                        Layout.fillHeight: true
-                        source: backend.assetRoot + "/dashboard-wordmark.png"
-                        fillMode: Image.PreserveAspectFit
-                        sourceSize.width: 430
-                        sourceSize.height: 330
                     }
                 }
             }
@@ -300,9 +324,9 @@ Item {
                             }
                             QuickTile {
                                 Layout.fillWidth: true
-                                text: "Donate"
-                                iconText: "♡"
-                                onClicked: backend.openDonate()
+                                text: "HamClock"
+                                iconText: "◷"
+                                onClicked: backend.openHamClock()
                             }
                             QuickTile {
                                 Layout.fillWidth: true

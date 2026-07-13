@@ -1,0 +1,13 @@
+{
+  "callsign": "ZL4SSB",
+  "locator": "RE66",
+  "operator_name": "16 watt road",
+  "qth": "Otatara",
+  "country": "Invercargill",
+  "dmr_id": "New Zealand",
+  "theme": "Teal Dark",
+  "show_splash": true,
+  "auto_scan": false,
+  "check_updates": true,
+  "hamclock_url": ""
+}

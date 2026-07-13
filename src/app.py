@@ -5,6 +5,7 @@ import os
 # Must be set before importing PyQt6. This avoids optional platform style
 # plugins and makes the same QML controls work on Windows and Raspberry Pi.
 os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
+os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu")
 
 import argparse
 import json
@@ -15,6 +16,11 @@ from PyQt6.QtCore import QTimer, QUrl
 from PyQt6.QtGui import QIcon
 from PyQt6.QtQml import QQmlApplicationEngine
 from PyQt6.QtWidgets import QApplication, QMessageBox
+
+try:
+    from PyQt6.QtWebEngineQuick import QtWebEngineQuick
+except ImportError:
+    QtWebEngineQuick = None
 
 from backend import Backend
 from constants import APP_NAME, ASSETS_DIR, BASE_DIR, CONFIG_DIR, REPORTS_DIR
@@ -46,6 +52,9 @@ def write_error(text: str) -> str:
 
 def main() -> int:
     args = parse_args()
+
+    if QtWebEngineQuick is not None:
+        QtWebEngineQuick.initialize()
 
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
