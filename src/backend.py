@@ -38,6 +38,8 @@ class Backend(QObject):
     dashboardsChanged = pyqtSignal()
     dashboardSelectionChanged = pyqtSignal()
     propagationChanged = pyqtSignal()
+    toolsChanged = pyqtSignal()
+    updateChanged = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -73,6 +75,11 @@ class Backend(QObject):
         self._auto_scan = False
         self._check_updates = True
         self._hamclock_url = ""
+        self._default_cat_port = ""
+        self._default_audio_device = ""
+        self._preferred_sdr = ""
+        self._update_channel = "Stable channel"
+        self._backup_before_updates = True
 
         self._applications: list[dict] = []
         self._devices: list[dict] = []
@@ -94,6 +101,18 @@ class Backend(QObject):
         self._xray_class = "—"
         self._geomagnetic_state = "Unknown"
         self._hf_conditions = []
+
+        self._audio_inputs: list[dict] = []
+        self._audio_outputs: list[dict] = []
+        self._audio_status = "Audio devices have not been scanned."
+        self._audio_busy = False
+        self._tool_status = "System tools are ready."
+        self._network_test_result = "Not run"
+        self._disk_test_result = "Not run"
+        self._usb_test_result = "Not run"
+        self._diagnostics_result = "Not run"
+        self._update_status = "No update operation running."
+        self._update_busy = False
 
         self._load_settings()
         self._load_dashboards()
@@ -257,6 +276,26 @@ class Backend(QObject):
     def hamClockUrl(self) -> str:
         return self._hamclock_url
 
+    @pyqtProperty(str, notify=stationChanged)
+    def defaultCatPort(self) -> str:
+        return self._default_cat_port
+
+    @pyqtProperty(str, notify=stationChanged)
+    def defaultAudioDevice(self) -> str:
+        return self._default_audio_device
+
+    @pyqtProperty(str, notify=stationChanged)
+    def preferredSdr(self) -> str:
+        return self._preferred_sdr
+
+    @pyqtProperty(str, notify=stationChanged)
+    def updateChannel(self) -> str:
+        return self._update_channel
+
+    @pyqtProperty(bool, notify=stationChanged)
+    def backupBeforeUpdates(self) -> bool:
+        return self._backup_before_updates
+
     # -------------------------- Dynamic lists ------------------------
 
     @pyqtProperty("QVariantList", notify=applicationsChanged)
@@ -353,6 +392,53 @@ class Backend(QObject):
     @pyqtProperty("QVariantList", notify=propagationChanged)
     def hfConditions(self):
         return self._hf_conditions
+
+
+    # --------------------------- System Tools -------------------------
+
+    @pyqtProperty("QVariantList", notify=toolsChanged)
+    def audioInputs(self):
+        return self._audio_inputs
+
+    @pyqtProperty("QVariantList", notify=toolsChanged)
+    def audioOutputs(self):
+        return self._audio_outputs
+
+    @pyqtProperty(str, notify=toolsChanged)
+    def audioStatus(self) -> str:
+        return self._audio_status
+
+    @pyqtProperty(bool, notify=toolsChanged)
+    def audioBusy(self) -> bool:
+        return self._audio_busy
+
+    @pyqtProperty(str, notify=toolsChanged)
+    def toolStatus(self) -> str:
+        return self._tool_status
+
+    @pyqtProperty(str, notify=toolsChanged)
+    def networkTestResult(self) -> str:
+        return self._network_test_result
+
+    @pyqtProperty(str, notify=toolsChanged)
+    def diskTestResult(self) -> str:
+        return self._disk_test_result
+
+    @pyqtProperty(str, notify=toolsChanged)
+    def usbTestResult(self) -> str:
+        return self._usb_test_result
+
+    @pyqtProperty(str, notify=toolsChanged)
+    def diagnosticsResult(self) -> str:
+        return self._diagnostics_result
+
+    @pyqtProperty(str, notify=updateChanged)
+    def updateStatus(self) -> str:
+        return self._update_status
+
+    @pyqtProperty(bool, notify=updateChanged)
+    def updateBusy(self) -> bool:
+        return self._update_busy
 
     # ------------------------------ Slots ----------------------------
 
@@ -488,7 +574,7 @@ class Backend(QObject):
         self._add_activity("Station profile updated")
         self.notificationChanged.emit()
 
-    @pyqtSlot(str, bool, bool, bool, str)
+    @pyqtSlot(str, bool, bool, bool, str, str, str, str, str, bool)
     def savePreferences(
         self,
         theme_name: str,
@@ -496,19 +582,30 @@ class Backend(QObject):
         auto_scan: bool,
         check_updates: bool,
         hamclock_url: str,
+        default_cat_port: str,
+        default_audio_device: str,
+        preferred_sdr: str,
+        update_channel: str,
+        backup_before_updates: bool,
     ) -> None:
         settings = self._read_settings()
         settings.update({
-            "theme": theme_name,
+            "theme": theme_name.strip() or "Dark",
             "show_splash": bool(show_splash),
             "auto_scan": bool(auto_scan),
             "check_updates": bool(check_updates),
             "hamclock_url": self._normalise_web_url(hamclock_url),
+            "default_cat_port": default_cat_port.strip(),
+            "default_audio_device": default_audio_device.strip(),
+            "preferred_sdr": preferred_sdr.strip(),
+            "update_channel": update_channel.strip() or "Stable channel",
+            "backup_before_updates": bool(backup_before_updates),
         })
         self._write_settings(settings)
         self._load_settings()
         self.stationChanged.emit()
-        self._notification = "Preferences saved."
+        self._notification = "Preferences saved and reloaded."
+        self._add_activity("Preferences updated")
         self.notificationChanged.emit()
 
     @pyqtSlot()
@@ -652,56 +749,97 @@ class Backend(QObject):
         webbrowser.open("https://www.spaceweather.gov/")
 
     def _fetch_propagation_worker(self) -> None:
+        errors = []
+        received = 0
+
+        def safe_download(label: str, urls: list[str]):
+            nonlocal received
+            last_error = None
+
+            for url in urls:
+                try:
+                    data = self._download_json(url)
+                    received += 1
+                    return data
+                except Exception as exc:
+                    last_error = exc
+
+            errors.append(f"{label}: {last_error}")
+            return None
+
         try:
-            kp_data = self._download_json(
-                "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
+            # These are current NOAA SWPC operational feeds. Alternative
+            # endpoints are included so one changed URL cannot break the page.
+            kp_data = safe_download(
+                "Kp",
+                [
+                    "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json",
+                    "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json",
+                ],
             )
-            plasma_data = self._download_json(
-                "https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json"
+            plasma_data = safe_download(
+                "solar wind plasma",
+                [
+                    "https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json",
+                    "https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json",
+                ],
             )
-            mag_data = self._download_json(
-                "https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json"
+            mag_data = safe_download(
+                "solar wind magnetic field",
+                [
+                    "https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json",
+                    "https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json",
+                ],
             )
-            flux_data = self._download_json(
-                "https://services.swpc.noaa.gov/json/solar-radio-flux.json"
+            flux_data = safe_download(
+                "solar flux",
+                [
+                    "https://services.swpc.noaa.gov/json/f107_cm_flux.json",
+                    "https://services.swpc.noaa.gov/products/10cm-flux-30-day.json",
+                    "https://services.swpc.noaa.gov/json/solar-radio-flux.json",
+                ],
             )
-            xray_data = self._download_json(
-                "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json"
+            xray_data = safe_download(
+                "X-ray",
+                [
+                    "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json",
+                    "https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json",
+                ],
             )
 
             kp = self._latest_table_number(
-                kp_data,
-                ("kp", "Kp", "estimated_kp"),
+                kp_data or [],
+                ("kp", "Kp", "estimated_kp", "kp_index"),
             )
             speed = self._latest_table_number(
-                plasma_data,
+                plasma_data or [],
                 ("speed",),
             )
             density = self._latest_table_number(
-                plasma_data,
+                plasma_data or [],
                 ("density",),
             )
             bz = self._latest_table_number(
-                mag_data,
-                ("bz_gsm", "bz"),
+                mag_data or [],
+                ("bz_gsm", "bz", "bz_gse"),
             )
-            flux = self._latest_solar_flux(flux_data)
-            xray = self._latest_xray_class(xray_data)
+            flux = self._latest_solar_flux(flux_data or [])
+            xray = self._latest_xray_class(xray_data or [])
 
             self._kp_index = self._format_number(kp, 1)
             self._solar_wind_speed = (
-                f"{speed:.0f} km/s" if speed is not None else "—"
+                f"{speed:.0f} km/s" if speed is not None else "Unavailable"
             )
             self._solar_wind_density = (
-                f"{density:.1f} p/cm³" if density is not None else "—"
+                f"{density:.1f} p/cm³" if density is not None else "Unavailable"
             )
             self._solar_wind_bz = (
-                f"{bz:+.1f} nT" if bz is not None else "—"
+                f"{bz:+.1f} nT" if bz is not None else "Unavailable"
             )
             self._solar_flux = (
-                f"{flux:.0f} sfu" if flux is not None else "—"
+                f"{flux:.0f} sfu" if flux is not None else "Unavailable"
             )
-            self._xray_class = xray or "—"
+            self._xray_class = xray or "Unavailable"
             self._geomagnetic_state = self._kp_description(kp)
             self._hf_conditions = self._estimate_hf_conditions(
                 flux,
@@ -711,7 +849,19 @@ class Backend(QObject):
             self._propagation_updated = datetime.now().strftime(
                 "%d %b %Y %H:%M"
             )
-            self._propagation_status = "Live NOAA data received"
+
+            if received == 0:
+                self._propagation_status = (
+                    "No NOAA feeds could be reached. Check the internet connection."
+                )
+            elif errors:
+                self._propagation_status = (
+                    f"Live NOAA data received ({received} feeds); "
+                    f"{len(errors)} reading(s) unavailable."
+                )
+            else:
+                self._propagation_status = "Live NOAA data received"
+
             self._add_activity("Propagation data refreshed")
         except Exception as exc:
             self._propagation_status = f"Update failed: {exc}"
@@ -726,8 +876,9 @@ class Backend(QObject):
         request = Request(
             url,
             headers={
-                "User-Agent": "HamRadio-Pi-Ultimate/4.5",
+                "User-Agent": f"HamRadio-Pi-Ultimate/{APP_VERSION}",
                 "Accept": "application/json",
+                "Cache-Control": "no-cache",
             },
         )
         with urlopen(request, timeout=15) as response:
@@ -787,6 +938,9 @@ class Backend(QObject):
                 "observed_flux",
                 "adjusted_flux",
                 "value",
+                "f107",
+                "f10.7",
+                "f10_7",
             ):
                 value = row.get(key)
                 try:
@@ -959,6 +1113,541 @@ class Backend(QObject):
         except Exception as exc:
             self._dashboard_status=f"Connection failed: {exc}"; self.dashboardSelectionChanged.emit(); return False
 
+
+    # ------------------------- System Tool Slots ----------------------
+
+    @pyqtSlot()
+    def scanAudioDevices(self) -> None:
+        if self._audio_busy:
+            return
+        self._audio_busy = True
+        self._audio_status = "Scanning microphones and speakers…"
+        self.toolsChanged.emit()
+        self._run_in_thread(self._scan_audio_worker)
+
+    @pyqtSlot()
+    def testSpeakers(self) -> None:
+        if self._audio_busy:
+            return
+        self._audio_busy = True
+        self._audio_status = "Playing a two-second test tone…"
+        self.toolsChanged.emit()
+        self._run_in_thread(self._speaker_test_worker)
+
+    @pyqtSlot()
+    def testMicrophone(self) -> None:
+        if self._audio_busy:
+            return
+        self._audio_busy = True
+        self._audio_status = "Recording the microphone for three seconds…"
+        self.toolsChanged.emit()
+        self._run_in_thread(self._microphone_test_worker)
+
+    @pyqtSlot()
+    def runNetworkTest(self) -> None:
+        self._tool_status = "Running network test…"
+        self.toolsChanged.emit()
+        self._run_in_thread(self._network_test_worker)
+
+    @pyqtSlot()
+    def runDiskTest(self) -> None:
+        self._tool_status = "Checking disk usage and write access…"
+        self.toolsChanged.emit()
+        self._run_in_thread(self._disk_test_worker)
+
+    @pyqtSlot()
+    def runUsbTest(self) -> None:
+        self._tool_status = "Scanning USB hardware…"
+        self.toolsChanged.emit()
+        self._run_in_thread(self._usb_test_worker)
+
+    @pyqtSlot()
+    def runDiagnostics(self) -> None:
+        self._tool_status = "Creating full diagnostics report…"
+        self.toolsChanged.emit()
+        self._run_in_thread(self._diagnostics_worker)
+
+    @pyqtSlot()
+    def openTerminal(self) -> None:
+        try:
+            if platform.system() == "Windows":
+                subprocess.Popen(["cmd.exe"])
+            else:
+                terminal = (
+                    shutil.which("x-terminal-emulator")
+                    or shutil.which("lxterminal")
+                    or shutil.which("xterm")
+                )
+                if not terminal:
+                    raise RuntimeError("No terminal program was found.")
+                subprocess.Popen([terminal], start_new_session=True)
+            self._tool_status = "Terminal opened."
+        except Exception as exc:
+            self._tool_status = f"Could not open terminal: {exc}"
+        self.toolsChanged.emit()
+
+    @pyqtSlot()
+    def updateDependencies(self) -> None:
+        if self._update_busy:
+            return
+        self._update_busy = True
+        self._update_status = "Opening dependency updater…"
+        self.updateChanged.emit()
+
+        try:
+            if platform.system() == "Windows":
+                command = (
+                    'py -3 -m pip install --upgrade '
+                    'pip PyQt6 PyQt6-WebEngine sounddevice numpy'
+                )
+                subprocess.Popen(
+                    ["cmd.exe", "/k", command],
+                    creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+                )
+                self._update_status = (
+                    "Windows dependency updater opened in a command window."
+                )
+            else:
+                terminal = (
+                    shutil.which("x-terminal-emulator")
+                    or shutil.which("lxterminal")
+                    or shutil.which("xterm")
+                )
+                if not terminal:
+                    raise RuntimeError("No terminal program was found.")
+
+                command = (
+                    "sudo apt-get update && "
+                    "sudo apt-get install --only-upgrade -y "
+                    "python3 python3-pyqt6 python3-pyqt6.qtquick "
+                    "python3-pyqt6.qtwebengine python3-pyqt6.qtsvg "
+                    "qml6-module-qtquick qml6-module-qtquick-controls "
+                    "qml6-module-qtquick-layouts qml6-module-qtwebengine "
+                    "alsa-utils usbutils curl unzip; "
+                    "echo; echo Dependency update finished.; "
+                    "read -r -p 'Press ENTER to close…'"
+                )
+                subprocess.Popen(
+                    [terminal, "-e", "bash", "-lc", command],
+                    start_new_session=True,
+                )
+                self._update_status = (
+                    "Raspberry Pi dependency updater opened in a terminal."
+                )
+        except Exception as exc:
+            self._update_status = f"Could not start dependency update: {exc}"
+        finally:
+            self._update_busy = False
+            self.updateChanged.emit()
+
+    @pyqtSlot()
+    def updateProgram(self) -> None:
+        if self._update_busy:
+            return
+        self._update_busy = True
+        self._update_status = "Preparing program update…"
+        self.updateChanged.emit()
+
+        try:
+            if platform.system() == "Windows":
+                webbrowser.open(
+                    "https://github.com/ZL4SSB/Ham-Radio-Pi-Ultimate/"
+                    "archive/refs/heads/main.zip"
+                )
+                self._update_status = (
+                    "Latest Windows ZIP opened in your browser. "
+                    "Close Ultimate before replacing its files."
+                )
+            else:
+                terminal = (
+                    shutil.which("x-terminal-emulator")
+                    or shutil.which("lxterminal")
+                    or shutil.which("xterm")
+                )
+                if not terminal:
+                    raise RuntimeError("No terminal program was found.")
+
+                command = (
+                    "curl -fsSL "
+                    "https://raw.githubusercontent.com/ZL4SSB/"
+                    "Ham-Radio-Pi-Ultimate/main/install-public.sh "
+                    "-o /tmp/install-hamradio-pi.sh && "
+                    "chmod +x /tmp/install-hamradio-pi.sh && "
+                    "/tmp/install-hamradio-pi.sh; "
+                    "echo; read -r -p 'Press ENTER to close…'"
+                )
+                subprocess.Popen(
+                    [terminal, "-e", "bash", "-lc", command],
+                    start_new_session=True,
+                )
+                self._update_status = (
+                    "Anonymous Raspberry Pi program updater opened."
+                )
+        except Exception as exc:
+            self._update_status = f"Could not start program update: {exc}"
+        finally:
+            self._update_busy = False
+            self.updateChanged.emit()
+
+    def _run_in_thread(self, target) -> None:
+        import threading
+        threading.Thread(target=target, daemon=True).start()
+
+    def _scan_audio_worker(self) -> None:
+        inputs = []
+        outputs = []
+
+        try:
+            try:
+                import sounddevice as sd
+                for index, device in enumerate(sd.query_devices()):
+                    name = str(device.get("name", f"Device {index}"))
+                    hostapi = str(device.get("hostapi", ""))
+                    detail = f"Device {index}"
+                    if hostapi:
+                        detail += f" · Host API {hostapi}"
+                    if int(device.get("max_input_channels", 0)) > 0:
+                        inputs.append({
+                            "name": name,
+                            "detail": detail,
+                        })
+                    if int(device.get("max_output_channels", 0)) > 0:
+                        outputs.append({
+                            "name": name,
+                            "detail": detail,
+                        })
+            except Exception:
+                if platform.system() == "Windows":
+                    script = (
+                        "Get-PnpDevice -Class AudioEndpoint | "
+                        "Where-Object {$_.Status -eq 'OK'} | "
+                        "Select-Object FriendlyName,InstanceId | "
+                        "ConvertTo-Json -Compress"
+                    )
+                    raw = subprocess.run(
+                        [
+                            "powershell.exe",
+                            "-NoProfile",
+                            "-ExecutionPolicy",
+                            "Bypass",
+                            "-Command",
+                            script,
+                        ],
+                        capture_output=True,
+                        text=True,
+                        timeout=15,
+                    ).stdout.strip()
+                    if raw:
+                        data = json.loads(raw)
+                        if isinstance(data, dict):
+                            data = [data]
+                        for item in data:
+                            name = str(item.get("FriendlyName", "Audio device"))
+                            lower = name.lower()
+                            record = {
+                                "name": name,
+                                "detail": "Windows audio endpoint",
+                            }
+                            if any(word in lower for word in (
+                                "microphone", "mic", "input", "line in"
+                            )):
+                                inputs.append(record)
+                            else:
+                                outputs.append(record)
+                else:
+                    outputs.extend(
+                        self._parse_alsa_cards(
+                            self._run(["aplay", "-l"]),
+                            "Playback",
+                        )
+                    )
+                    inputs.extend(
+                        self._parse_alsa_cards(
+                            self._run(["arecord", "-l"]),
+                            "Capture",
+                        )
+                    )
+
+            self._audio_inputs = inputs
+            self._audio_outputs = outputs
+            self._audio_status = (
+                f"Found {len(inputs)} microphone/input device(s) and "
+                f"{len(outputs)} speaker/output device(s)."
+            )
+            self._add_activity("Audio devices scanned")
+        except Exception as exc:
+            self._audio_status = f"Audio scan failed: {exc}"
+        finally:
+            self._audio_busy = False
+            self.toolsChanged.emit()
+
+    @staticmethod
+    def _parse_alsa_cards(text: str, direction: str) -> list[dict]:
+        devices = []
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("card "):
+                continue
+            devices.append({
+                "name": stripped,
+                "detail": f"ALSA {direction} device",
+            })
+        return devices
+
+    def _create_test_tone(self, path: Path) -> None:
+        import math
+        import struct
+        import wave
+
+        sample_rate = 44100
+        duration = 2.0
+        frequency = 700.0
+        amplitude = 0.30
+
+        with wave.open(str(path), "wb") as handle:
+            handle.setnchannels(1)
+            handle.setsampwidth(2)
+            handle.setframerate(sample_rate)
+
+            frames = bytearray()
+            for index in range(int(sample_rate * duration)):
+                fade = min(
+                    1.0,
+                    index / (sample_rate * 0.05),
+                    (sample_rate * duration - index) / (sample_rate * 0.05),
+                )
+                value = int(
+                    32767
+                    * amplitude
+                    * max(0.0, fade)
+                    * math.sin(2 * math.pi * frequency * index / sample_rate)
+                )
+                frames.extend(struct.pack("<h", value))
+            handle.writeframes(frames)
+
+    def _speaker_test_worker(self) -> None:
+        import tempfile
+
+        path = Path(tempfile.gettempdir()) / "hamradio-pi-speaker-test.wav"
+        try:
+            self._create_test_tone(path)
+
+            if platform.system() == "Windows":
+                import winsound
+                winsound.PlaySound(str(path), winsound.SND_FILENAME)
+            else:
+                player = shutil.which("aplay") or shutil.which("paplay")
+                if not player:
+                    raise RuntimeError("Neither aplay nor paplay was found.")
+                subprocess.run(
+                    [player, str(path)],
+                    check=True,
+                    timeout=15,
+                )
+
+            self._audio_status = (
+                "Speaker test finished. You should have heard a two-second tone."
+            )
+            self._add_activity("Speaker test completed")
+        except Exception as exc:
+            self._audio_status = f"Speaker test failed: {exc}"
+        finally:
+            try:
+                path.unlink(missing_ok=True)
+            except Exception:
+                pass
+            self._audio_busy = False
+            self.toolsChanged.emit()
+
+    def _microphone_test_worker(self) -> None:
+        import tempfile
+
+        path = Path(tempfile.gettempdir()) / "hamradio-pi-microphone-test.wav"
+        try:
+            peak = None
+            rms = None
+
+            try:
+                import numpy as np
+                import sounddevice as sd
+
+                sample_rate = 44100
+                recording = sd.rec(
+                    int(3 * sample_rate),
+                    samplerate=sample_rate,
+                    channels=1,
+                    dtype="float32",
+                )
+                sd.wait()
+                samples = np.asarray(recording).reshape(-1)
+                peak = float(np.max(np.abs(samples)))
+                rms = float(np.sqrt(np.mean(np.square(samples))))
+            except Exception:
+                if platform.system() == "Windows":
+                    raise RuntimeError(
+                        "Install or update the sounddevice package, then retry."
+                    )
+
+                recorder = shutil.which("arecord")
+                if not recorder:
+                    raise RuntimeError("arecord was not found.")
+
+                subprocess.run(
+                    [
+                        recorder,
+                        "-q",
+                        "-d",
+                        "3",
+                        "-f",
+                        "S16_LE",
+                        "-r",
+                        "44100",
+                        "-c",
+                        "1",
+                        str(path),
+                    ],
+                    check=True,
+                    timeout=12,
+                )
+                peak, rms = self._analyse_pcm_wav(path)
+
+            peak_percent = min(100, int(round((peak or 0.0) * 100)))
+            rms_percent = min(100, int(round((rms or 0.0) * 100)))
+
+            if peak_percent < 1:
+                self._audio_status = (
+                    "Microphone test recorded almost no signal. "
+                    "Check the selected input and its level."
+                )
+            else:
+                self._audio_status = (
+                    f"Microphone test passed — peak {peak_percent}%, "
+                    f"average {rms_percent}%."
+                )
+            self._add_activity("Microphone test completed")
+        except Exception as exc:
+            self._audio_status = f"Microphone test failed: {exc}"
+        finally:
+            try:
+                path.unlink(missing_ok=True)
+            except Exception:
+                pass
+            self._audio_busy = False
+            self.toolsChanged.emit()
+
+    @staticmethod
+    def _analyse_pcm_wav(path: Path) -> tuple[float, float]:
+        import array
+        import math
+        import wave
+
+        with wave.open(str(path), "rb") as handle:
+            width = handle.getsampwidth()
+            frames = handle.readframes(handle.getnframes())
+
+        if width != 2:
+            raise RuntimeError("Only 16-bit PCM microphone recordings are supported.")
+
+        values = array.array("h")
+        values.frombytes(frames)
+        if sys.byteorder != "little":
+            values.byteswap()
+        if not values:
+            return 0.0, 0.0
+
+        normalised = [abs(value) / 32768.0 for value in values]
+        peak = max(normalised)
+        rms = math.sqrt(sum(value * value for value in normalised) / len(normalised))
+        return peak, rms
+
+    def _network_test_worker(self) -> None:
+        try:
+            started = time.monotonic()
+            socket.create_connection(("1.1.1.1", 53), timeout=4).close()
+            latency = (time.monotonic() - started) * 1000
+            resolved = socket.gethostbyname("services.swpc.noaa.gov")
+            self._network_test_result = (
+                f"PASS — internet reachable in {latency:.0f} ms; "
+                f"DNS resolved NOAA to {resolved}; local IP {self._local_ip()}."
+            )
+        except Exception as exc:
+            self._network_test_result = f"FAIL — {exc}"
+        self._tool_status = "Network test finished."
+        self.toolsChanged.emit()
+
+    def _disk_test_worker(self) -> None:
+        try:
+            total, used, free = shutil.disk_usage(BASE_DIR)
+            test_file = REPORTS_DIR / ".write-test"
+            REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+            test_file.write_text("HamRadio-Pi write test\n", encoding="utf-8")
+            test_file.unlink()
+            self._disk_test_result = (
+                f"PASS — {free / 1024**3:.1f} GB free of "
+                f"{total / 1024**3:.1f} GB; project folder is writable."
+            )
+        except Exception as exc:
+            self._disk_test_result = f"FAIL — {exc}"
+        self._tool_status = "Disk test finished."
+        self.toolsChanged.emit()
+
+    def _usb_test_worker(self) -> None:
+        try:
+            if platform.system() == "Windows":
+                script = (
+                    "Get-PnpDevice -PresentOnly | "
+                    "Where-Object {$_.InstanceId -like 'USB*'} | "
+                    "Select-Object -First 100 FriendlyName,Status | "
+                    "ConvertTo-Json -Compress"
+                )
+                raw = subprocess.run(
+                    [
+                        "powershell.exe",
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-Command",
+                        script,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=20,
+                ).stdout.strip()
+                count = 0
+                if raw:
+                    data = json.loads(raw)
+                    count = len(data) if isinstance(data, list) else 1
+                self._usb_test_result = (
+                    f"PASS — Windows reports {count} present USB device(s)."
+                )
+            else:
+                lines = [
+                    line for line in self._run(["lsusb"]).splitlines()
+                    if line.strip()
+                ]
+                self._usb_test_result = (
+                    f"PASS — lsusb reports {len(lines)} USB device(s)."
+                )
+        except Exception as exc:
+            self._usb_test_result = f"FAIL — {exc}"
+        self._tool_status = "USB test finished."
+        self.toolsChanged.emit()
+
+    def _diagnostics_worker(self) -> None:
+        try:
+            path = Path(self.createSystemReport())
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(f"Audio status: {self._audio_status}\n")
+                handle.write(f"Network test: {self._network_test_result}\n")
+                handle.write(f"Disk test: {self._disk_test_result}\n")
+                handle.write(f"USB test: {self._usb_test_result}\n")
+                handle.write(f"Python executable: {sys.executable}\n")
+            self._diagnostics_result = f"Report created: {path}"
+        except Exception as exc:
+            self._diagnostics_result = f"Diagnostics failed: {exc}"
+        self._tool_status = "Diagnostics finished."
+        self.toolsChanged.emit()
+
     # ----------------------------- Helpers ---------------------------
 
     def _add_activity(self, message: str) -> None:
@@ -1035,6 +1724,11 @@ class Backend(QObject):
         self._auto_scan = settings.get("auto_scan", False)
         self._check_updates = settings.get("check_updates", True)
         self._hamclock_url = self._normalise_web_url(settings.get("hamclock_url", ""))
+        self._default_cat_port = settings.get("default_cat_port", "")
+        self._default_audio_device = settings.get("default_audio_device", "")
+        self._preferred_sdr = settings.get("preferred_sdr", "")
+        self._update_channel = settings.get("update_channel", "Stable channel")
+        self._backup_before_updates = settings.get("backup_before_updates", True)
 
     def _load_applications(self) -> None:
         try:

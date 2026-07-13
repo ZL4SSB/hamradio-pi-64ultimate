@@ -80,3 +80,35 @@ Displayed values:
 - Estimated conditions for 160–10 metres
 
 Data refreshes every five minutes and can also be refreshed manually.
+
+
+## 4.5.1
+
+- Replaced fragile NOAA propagation URLs with current operational feeds
+- Each propagation reading now fails independently
+- A missing NOAA value no longer breaks the whole page
+- Preferences now persist hardware defaults, update channel and backup choice
+- Startup hardware scan and update checks use the saved Preferences options
+- HamClock, splash, theme and startup choices save and reload
+
+
+## 4.6.0 — Operational System Tools
+
+System Tools now provides:
+
+- microphone and speaker detection on Raspberry Pi and Windows
+- speaker test tone
+- three-second microphone level test
+- internet and DNS test
+- disk-space and write-access test
+- USB-device test
+- diagnostics report
+- terminal launcher
+- program update button
+- dependency update button
+
+The splash screen remains visible for five seconds. Donate controls are now
+prominent on both the splash screen and sidebar.
+
+The dashboard wordmark was rebuilt with a transparent background and moved
+further upward and to the right.

@@ -237,11 +237,11 @@ Item {
 
                         Image {
                             anchors.centerIn: parent
-                            anchors.horizontalCenterOffset: 8
-                            anchors.verticalCenterOffset: -7
-                            width: Math.min(parent.width - 24, 220)
-                            height: Math.min(parent.height - 30, 208)
-                            source: backend.assetRoot + "/dashboard-wordmark.png"
+                            anchors.horizontalCenterOffset: 16
+                            anchors.verticalCenterOffset: -18
+                            width: Math.min(parent.width - 34, 212)
+                            height: Math.min(parent.height - 44, 194)
+                            source: backend.assetRoot + "/dashboard-wordmark-clean.png"
                             fillMode: Image.PreserveAspectFit
                             sourceSize.width: 430
                             sourceSize.height: 330

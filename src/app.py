@@ -120,6 +120,12 @@ def main() -> int:
         close_splash()
         app.setQuitOnLastWindowClosed(True)
 
+        if backend.autoScan:
+            QTimer.singleShot(1200, backend.scanHardware)
+
+        if backend.checkUpdates:
+            QTimer.singleShot(1800, backend.checkForUpdates)
+
         if args.self_test:
             QTimer.singleShot(900, app.quit)
 
@@ -133,7 +139,7 @@ def main() -> int:
         if not splash_engine.rootObjects():
             show_error(warnings + [f"Could not load: {splash_path}"])
         else:
-            QTimer.singleShot(900, load_main)
+            QTimer.singleShot(5000, load_main)
     else:
         QTimer.singleShot(0, load_main)
 

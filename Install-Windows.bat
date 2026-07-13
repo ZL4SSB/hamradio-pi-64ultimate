@@ -5,7 +5,7 @@ cd /d "%~dp0"
 
 echo.
 echo ============================================================
-echo          HamRadio-Pi Ultimate 4.4.1 Installer
+echo          HamRadio-Pi Ultimate 4.6.0 Installer
 echo ============================================================
 echo.
 echo This installer will:
@@ -44,13 +44,13 @@ echo Updating pip...
 if errorlevel 1 goto :failed
 
 echo.
-echo Installing Qt, QML and WebEngine...
-%PY_CMD% -m pip install --upgrade PyQt6 PyQt6-WebEngine
+echo Installing Qt, QML, WebEngine and audio support...
+%PY_CMD% -m pip install --upgrade PyQt6 PyQt6-WebEngine sounddevice numpy
 if errorlevel 1 goto :failed
 
 echo.
 echo Verifying installation...
-%PY_CMD% -c "from PyQt6.QtCore import QT_VERSION_STR; from PyQt6.QtQml import QQmlApplicationEngine; from PyQt6.QtWebEngineQuick import QtWebEngineQuick; print('Qt', QT_VERSION_STR, '- QML OK - WebEngine OK')"
+%PY_CMD% -c "from PyQt6.QtCore import QT_VERSION_STR; from PyQt6.QtQml import QQmlApplicationEngine; from PyQt6.QtWebEngineQuick import QtWebEngineQuick; import sounddevice, numpy; print('Qt', QT_VERSION_STR, '- QML OK - WebEngine OK - Audio OK')"
 if errorlevel 1 goto :failed
 
 echo.

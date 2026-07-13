@@ -66,7 +66,7 @@ Window {
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 112
+                Layout.preferredHeight: 132
                 radius: 10
                 color: "#111923"
                 border.color: "#C99B16"
@@ -78,9 +78,9 @@ Window {
                     ColumnLayout {
                         Layout.fillWidth: true
                         Text {
-                            text: "Support HamRadio-Pi Ultimate"
+                            text: "♥  Support HamRadio-Pi Ultimate"
                             color: "#FFD55A"
-                            font.pixelSize: 16
+                            font.pixelSize: 18
                             font.bold: true
                         }
                         Text {
@@ -97,8 +97,25 @@ Window {
                     }
 
                     Button {
-                        text: "Donate"
+                        implicitWidth: 130
+                        implicitHeight: 50
+                        text: "Donate $1+"
                         onClicked: backend.openDonate()
+
+                        background: Rectangle {
+                            radius: 8
+                            color: parent.hovered ? "#FFD95B" : "#F4C430"
+                            border.color: "#FFF0A8"
+                        }
+
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#1B1B1B"
+                            font.pixelSize: 15
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
                 }
             }

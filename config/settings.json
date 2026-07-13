@@ -5,9 +5,14 @@
   "qth": "Otatara",
   "country": "Invercargill",
   "dmr_id": "New Zealand",
-  "theme": "Teal Dark",
+  "theme": "Dark",
   "show_splash": true,
   "auto_scan": false,
   "check_updates": true,
-  "hamclock_url": ""
+  "hamclock_url": "",
+  "default_cat_port": "",
+  "default_audio_device": "",
+  "preferred_sdr": "",
+  "update_channel": "Stable channel",
+  "backup_before_updates": true
 }

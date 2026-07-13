@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="HamRadio-Pi Ultimate"
-APP_VERSION="4.3.2"
+APP_VERSION="4.6.0"
 
 APP_DIR="$HOME/.local/share/applications"
 ICON_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
@@ -118,6 +118,10 @@ install_available_packages \
     git \
     usbutils \
     alsa-utils \
+    pulseaudio-utils \
+    python3-sounddevice \
+    python3-numpy \
+    portaudio19-dev \
     xterm
 
 # PolicyKit changed package names between Debian releases. It is optional,

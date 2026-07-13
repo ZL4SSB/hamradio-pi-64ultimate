@@ -122,6 +122,28 @@ ApplicationWindow {
 
                     Item { Layout.fillHeight: true }
 
+                    Button {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        text: "♥  Donate $1+"
+                        onClicked: backend.openDonate()
+
+                        background: Rectangle {
+                            radius: 9
+                            color: parent.hovered ? "#FFD95B" : "#F4C430"
+                            border.color: "#FFF0A8"
+                        }
+
+                        contentItem: Text {
+                            text: parent.text
+                            color: "#1B1B1B"
+                            font.pixelSize: 15
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: 104
@@ -218,39 +240,9 @@ ApplicationWindow {
 
     Component { id: propagation; Propagation {} }
 
-    Component {
-        id: updates
-        Generic {
-            pageTitle: "Updates"
-            pageSubtitle: "Check, review and install HamRadio-Pi Ultimate updates."
-            cards: [
-                "Current Version",
-                "Check GitHub",
-                "View Changelog",
-                "Download Update",
-                "Create Backup",
-                "Rollback"
-            ]
-        }
-    }
+    Component { id: updates; Updates {} }
 
-    Component {
-        id: tools
-        Generic {
-            pageTitle: "System Tools"
-            pageSubtitle: "Maintenance, reports and Raspberry Pi utilities."
-            cards: [
-                "System Report",
-                "Package Repair",
-                "Disk Check",
-                "Network Test",
-                "USB Report",
-                "Audio Test",
-                "Open Terminal",
-                "Diagnostics"
-            ]
-        }
-    }
+    Component { id: tools; SystemTools {} }
 
     Component {
         id: help

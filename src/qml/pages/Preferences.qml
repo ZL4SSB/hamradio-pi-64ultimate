@@ -15,17 +15,33 @@ Item {
             width: parent.width
             spacing: 16
 
-            Text {
-                text: "Preferences"
-                color: "#F4F8FA"
-                font.pixelSize: 27
-                font.bold: true
-            }
+            RowLayout {
+                Layout.fillWidth: true
 
-            Text {
-                text: "Application appearance, startup and automatic actions."
-                color: "#B8C9D2"
-                font.pixelSize: 14
+                ColumnLayout {
+                    Layout.fillWidth: true
+
+                    Text {
+                        text: "Preferences"
+                        color: "#F4F8FA"
+                        font.pixelSize: 27
+                        font.bold: true
+                    }
+
+                    Text {
+                        text: "Application appearance, startup, hardware and update defaults."
+                        color: "#B8C9D2"
+                        font.pixelSize: 14
+                    }
+                }
+
+                Text {
+                    text: backend.notification
+                    color: "#18D6D2"
+                    font.pixelSize: 12
+                    elide: Text.ElideRight
+                    Layout.maximumWidth: 420
+                }
             }
 
             GridLayout {
@@ -64,9 +80,10 @@ Item {
                             id: themeBox
                             Layout.fillWidth: true
                             model: ["Dark", "Teal Dark", "High Contrast"]
+
                             Component.onCompleted: {
-                                var i = find(backend.themeName)
-                                if (i >= 0) currentIndex = i
+                                var index = find(backend.themeName)
+                                currentIndex = index >= 0 ? index : 0
                             }
                         }
 
@@ -75,6 +92,14 @@ Item {
                             Layout.fillWidth: true
                             text: "Show splash screen"
                             checked: backend.showSplash
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Theme selection is stored now. Additional visual themes can be added without changing the settings format."
+                            color: "#AFC1CB"
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
                         }
 
                         Item { Layout.fillHeight: true }
@@ -116,7 +141,7 @@ Item {
 
                         Text {
                             Layout.fillWidth: true
-                            text: "These settings are stored locally and used automatically on Raspberry Pi OS."
+                            text: "These options are saved in config/settings.json and are retained after updates."
                             color: "#B8C9D2"
                             font.pixelSize: 13
                             wrapMode: Text.WordWrap
@@ -128,7 +153,7 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 260
+                    implicitHeight: 315
                     radius: 10
                     color: "#10212C"
                     border.color: "#365E70"
@@ -136,7 +161,7 @@ Item {
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 20
-                        spacing: 11
+                        spacing: 10
 
                         Text {
                             text: "Hardware defaults"
@@ -153,7 +178,9 @@ Item {
                         }
 
                         DarkTextField {
+                            id: catPortField
                             Layout.fillWidth: true
+                            text: backend.defaultCatPort
                             placeholderText: "Example: /dev/ttyUSB0"
                         }
 
@@ -165,7 +192,9 @@ Item {
                         }
 
                         DarkTextField {
+                            id: audioDeviceField
                             Layout.fillWidth: true
+                            text: backend.defaultAudioDevice
                             placeholderText: "Example: USB Audio CODEC"
                         }
 
@@ -177,7 +206,9 @@ Item {
                         }
 
                         DarkTextField {
+                            id: sdrField
                             Layout.fillWidth: true
+                            text: backend.preferredSdr
                             placeholderText: "Example: RTL-SDR"
                         }
                     }
@@ -185,7 +216,7 @@ Item {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 260
+                    implicitHeight: 315
                     radius: 10
                     color: "#10212C"
                     border.color: "#365E70"
@@ -210,14 +241,21 @@ Item {
                         }
 
                         DarkComboBox {
+                            id: updateChannelBox
                             Layout.fillWidth: true
                             model: ["Stable channel", "Preview channel"]
+
+                            Component.onCompleted: {
+                                var index = find(backend.updateChannel)
+                                currentIndex = index >= 0 ? index : 0
+                            }
                         }
 
                         DarkCheckBox {
+                            id: backupCheck
                             Layout.fillWidth: true
                             text: "Create a backup before updates"
-                            checked: true
+                            checked: backend.backupBeforeUpdates
                         }
 
                         Text {
@@ -226,13 +264,21 @@ Item {
                             font.pixelSize: 13
                         }
 
+                        Text {
+                            Layout.fillWidth: true
+                            text: "The selected channel and backup preference are now persistent and ready for the Updates page."
+                            color: "#AFC1CB"
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
+
                         Item { Layout.fillHeight: true }
                     }
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 270
+                    implicitHeight: 285
                     radius: 10
                     color: "#10212C"
                     border.color: "#365E70"
@@ -291,21 +337,48 @@ Item {
                 }
             }
 
-            Button {
-                Layout.alignment: Qt.AlignLeft
-                text: "Save Preferences"
-                onClicked: backend.savePreferences(
-                    themeBox.currentText,
-                    splashCheck.checked,
-                    scanCheck.checked,
-                    updateCheck.checked,
-                    hamClockUrlField.text
-                )
+            RowLayout {
+                Layout.fillWidth: true
+
+                Button {
+                    text: "Save Preferences"
+                    onClicked: backend.savePreferences(
+                        themeBox.currentText,
+                        splashCheck.checked,
+                        scanCheck.checked,
+                        updateCheck.checked,
+                        hamClockUrlField.text,
+                        catPortField.text,
+                        audioDeviceField.text,
+                        sdrField.text,
+                        updateChannelBox.currentText,
+                        backupCheck.checked
+                    )
+                }
+
+                Button {
+                    text: "Reload Saved Values"
+                    onClicked: {
+                        themeBox.currentIndex = Math.max(0, themeBox.find(backend.themeName))
+                        splashCheck.checked = backend.showSplash
+                        scanCheck.checked = backend.autoScan
+                        updateCheck.checked = backend.checkUpdates
+                        hamClockUrlField.text = backend.hamClockUrl
+                        catPortField.text = backend.defaultCatPort
+                        audioDeviceField.text = backend.defaultAudioDevice
+                        sdrField.text = backend.preferredSdr
+                        updateChannelBox.currentIndex = Math.max(
+                            0,
+                            updateChannelBox.find(backend.updateChannel)
+                        )
+                        backupCheck.checked = backend.backupBeforeUpdates
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
             }
 
-            Item {
-                Layout.preferredHeight: 12
-            }
+            Item { Layout.preferredHeight: 12 }
         }
     }
 }
