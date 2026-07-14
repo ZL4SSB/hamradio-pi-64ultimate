@@ -294,7 +294,7 @@ Item {
                                 text: "Hardware Scan"
                                 iconText: "⌕"
                                 onClicked: {
-                                    backend.setPage("Hardware")
+                                    backend.setPage("Station Tools")
                                     backend.scanHardware()
                                 }
                             }
@@ -312,9 +312,9 @@ Item {
                             }
                             QuickTile {
                                 Layout.fillWidth: true
-                                text: "Updates"
-                                iconText: "◯"
-                                onClicked: backend.setPage("Updates")
+                                text: "System Tools"
+                                iconText: "⚙"
+                                onClicked: backend.setPage("Station Tools")
                             }
                             QuickTile {
                                 Layout.fillWidth: true
@@ -324,9 +324,9 @@ Item {
                             }
                             QuickTile {
                                 Layout.fillWidth: true
-                                text: "HamClock"
+                                text: "Shack Clock"
                                 iconText: "◷"
-                                onClicked: backend.openHamClock()
+                                onClicked: backend.setPage("Shack Clock")
                             }
                             QuickTile {
                                 Layout.fillWidth: true
@@ -418,7 +418,7 @@ Item {
 
                         Button {
                             text: "⚙  Manage Services"
-                            onClicked: backend.setPage("Tools")
+                            onClicked: backend.setPage("Station Tools")
                         }
                     }
                 }
@@ -475,7 +475,7 @@ Item {
 
                         Button {
                             text: "▤  View Full Log"
-                            onClicked: backend.setPage("Help & Logs")
+                            onClicked: backend.openActivityLog()
                         }
                     }
                 }

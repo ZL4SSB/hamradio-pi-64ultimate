@@ -7,11 +7,11 @@ Item {
     Flickable {
         anchors.fill: parent
         contentWidth: width
-        contentHeight: preferencesColumn.implicitHeight + 24
+        contentHeight: pageColumn.implicitHeight + 30
         clip: true
 
         ColumnLayout {
-            id: preferencesColumn
+            id: pageColumn
             width: parent.width
             spacing: 16
 
@@ -24,12 +24,12 @@ Item {
                     Text {
                         text: "Preferences"
                         color: "#F4F8FA"
-                        font.pixelSize: 27
+                        font.pixelSize: 28
                         font.bold: true
                     }
 
                     Text {
-                        text: "Application appearance, startup, hardware and update defaults."
+                        text: "Appearance, startup, hardware defaults and update safety."
                         color: "#B8C9D2"
                         font.pixelSize: 14
                     }
@@ -39,20 +39,21 @@ Item {
                     text: backend.notification
                     color: "#18D6D2"
                     font.pixelSize: 12
+                    horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight
-                    Layout.maximumWidth: 420
+                    Layout.maximumWidth: 430
                 }
             }
 
             GridLayout {
                 Layout.fillWidth: true
-                columns: width >= 900 ? 2 : 1
+                columns: width >= 940 ? 2 : 1
                 columnSpacing: 14
                 rowSpacing: 14
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 270
+                    implicitHeight: 360
                     radius: 10
                     color: "#10212C"
                     border.color: "#365E70"
@@ -60,7 +61,7 @@ Item {
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 20
-                        spacing: 14
+                        spacing: 12
 
                         Text {
                             text: "Appearance"
@@ -70,16 +71,22 @@ Item {
                         }
 
                         Text {
-                            text: "Theme"
+                            text: "Application theme"
                             color: "#DCE8EE"
-                            font.pixelSize: 14
+                            font.pixelSize: 13
                             font.bold: true
                         }
 
                         DarkComboBox {
                             id: themeBox
                             Layout.fillWidth: true
-                            model: ["Dark", "Teal Dark", "High Contrast"]
+                            model: [
+                                "Ultimate Teal",
+                                "Dark Blue",
+                                "Radio Green",
+                                "Amber Radio",
+                                "High Contrast"
+                            ]
 
                             Component.onCompleted: {
                                 var index = find(backend.themeName)
@@ -87,28 +94,73 @@ Item {
                             }
                         }
 
-                        DarkCheckBox {
-                            id: splashCheck
+                        GridLayout {
                             Layout.fillWidth: true
-                            text: "Show splash screen"
-                            checked: backend.showSplash
+                            columns: 5
+                            columnSpacing: 7
+
+                            Repeater {
+                                model: [
+                                    ["Teal", "#18D6D2", "#10212C"],
+                                    ["Blue", "#4DA3FF", "#101E33"],
+                                    ["Green", "#53E58D", "#10251A"],
+                                    ["Amber", "#F0B642", "#2A2110"],
+                                    ["Contrast", "#00FFFF", "#050505"]
+                                ]
+
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    implicitHeight: 68
+                                    radius: 7
+                                    color: modelData[2]
+                                    border.color: modelData[1]
+                                    border.width: 2
+
+                                    Column {
+                                        anchors.centerIn: parent
+                                        spacing: 4
+
+                                        Rectangle {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            width: 22
+                                            height: 8
+                                            radius: 4
+                                            color: modelData[1]
+                                        }
+
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: modelData[0]
+                                            color: "#F4F8FA"
+                                            font.pixelSize: 10
+                                            font.bold: true
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         Text {
                             Layout.fillWidth: true
-                            text: "Theme selection is stored now. Additional visual themes can be added without changing the settings format."
+                            text: "Save Preferences to apply the selected theme to the application shell and navigation."
                             color: "#AFC1CB"
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
 
-                        Item { Layout.fillHeight: true }
+                        DarkCheckBox {
+                            id: splashCheck
+                            Layout.fillWidth: true
+                            text: "Show the cinematic startup splash"
+                            checked: backend.showSplash
+                        }
                     }
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 270
+                    implicitHeight: 360
                     radius: 10
                     color: "#10212C"
                     border.color: "#365E70"
@@ -116,7 +168,7 @@ Item {
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 20
-                        spacing: 14
+                        spacing: 13
 
                         Text {
                             text: "Startup"
@@ -135,25 +187,30 @@ Item {
                         DarkCheckBox {
                             id: updateCheck
                             Layout.fillWidth: true
-                            text: "Check for updates at startup"
+                            text: "Check for HRPU updates at startup"
                             checked: backend.checkUpdates
+                        }
+
+                        DarkCheckBox {
+                            id: startAtLoginCheck
+                            Layout.fillWidth: true
+                            text: "Start HRPU when I sign in"
+                            checked: backend.startAtLogin
                         }
 
                         Text {
                             Layout.fillWidth: true
-                            text: "These options are saved in config/settings.json and are retained after updates."
-                            color: "#B8C9D2"
-                            font.pixelSize: 13
+                            text: "Startup scans begin after the main Dashboard opens."
+                            color: "#AFC1CB"
+                            font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
-
-                        Item { Layout.fillHeight: true }
                     }
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 315
+                    implicitHeight: 350
                     radius: 10
                     color: "#10212C"
                     border.color: "#365E70"
@@ -164,7 +221,7 @@ Item {
                         spacing: 10
 
                         Text {
-                            text: "Hardware defaults"
+                            text: "Hardware Defaults"
                             color: "#F4F8FA"
                             font.pixelSize: 18
                             font.bold: true
@@ -173,7 +230,6 @@ Item {
                         Text {
                             text: "Default CAT port"
                             color: "#DCE8EE"
-                            font.pixelSize: 13
                             font.bold: true
                         }
 
@@ -181,13 +237,12 @@ Item {
                             id: catPortField
                             Layout.fillWidth: true
                             text: backend.defaultCatPort
-                            placeholderText: "Example: /dev/ttyUSB0"
+                            placeholderText: "/dev/ttyUSB0 or COM3"
                         }
 
                         Text {
                             text: "Default audio device"
                             color: "#DCE8EE"
-                            font.pixelSize: 13
                             font.bold: true
                         }
 
@@ -195,13 +250,12 @@ Item {
                             id: audioDeviceField
                             Layout.fillWidth: true
                             text: backend.defaultAudioDevice
-                            placeholderText: "Example: USB Audio CODEC"
+                            placeholderText: "USB Audio CODEC"
                         }
 
                         Text {
                             text: "Preferred SDR"
                             color: "#DCE8EE"
-                            font.pixelSize: 13
                             font.bold: true
                         }
 
@@ -209,14 +263,14 @@ Item {
                             id: sdrField
                             Layout.fillWidth: true
                             text: backend.preferredSdr
-                            placeholderText: "Example: RTL-SDR"
+                            placeholderText: "RTL-SDR, Airspy, SDRplay…"
                         }
                     }
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 315
+                    implicitHeight: 350
                     radius: 10
                     color: "#10212C"
                     border.color: "#365E70"
@@ -224,10 +278,10 @@ Item {
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 20
-                        spacing: 14
+                        spacing: 12
 
                         Text {
-                            text: "Updates"
+                            text: "Updates & Audio"
                             color: "#F4F8FA"
                             font.pixelSize: 18
                             font.bold: true
@@ -236,7 +290,6 @@ Item {
                         Text {
                             text: "Update channel"
                             color: "#DCE8EE"
-                            font.pixelSize: 13
                             font.bold: true
                         }
 
@@ -254,31 +307,33 @@ Item {
                         DarkCheckBox {
                             id: backupCheck
                             Layout.fillWidth: true
-                            text: "Create a backup before updates"
+                            text: "Create a settings backup before updates"
                             checked: backend.backupBeforeUpdates
                         }
 
-                        Text {
-                            text: "Current version: " + backend.appVersion
-                            color: "#B8C9D2"
-                            font.pixelSize: 13
-                        }
-
-                        Text {
+                        DarkCheckBox {
+                            id: spectrumPeakHoldCheck
                             Layout.fillWidth: true
-                            text: "The selected channel and backup preference are now persistent and ready for the Updates page."
-                            color: "#AFC1CB"
-                            font.pixelSize: 12
-                            wrapMode: Text.WordWrap
+                            text: "Enable spectrum Peak Hold by default"
+                            checked: backend.spectrumPeakHoldDefault
                         }
 
-                        Item { Layout.fillHeight: true }
+                        DarkComboBox {
+                            id: spectrumDecayBox
+                            Layout.fillWidth: true
+                            model: ["Fast", "Medium", "Slow"]
+
+                            Component.onCompleted: {
+                                var index = find(backend.spectrumPeakDecayDefault)
+                                currentIndex = index >= 0 ? index : 1
+                            }
+                        }
                     }
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 285
+                    implicitHeight: 385
                     radius: 10
                     color: "#10212C"
                     border.color: "#365E70"
@@ -286,10 +341,10 @@ Item {
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 20
-                        spacing: 12
+                        spacing: 10
 
                         Text {
-                            text: "HamClock"
+                            text: "Live Propagation / DX Cluster"
                             color: "#F4F8FA"
                             font.pixelSize: 18
                             font.bold: true
@@ -297,41 +352,131 @@ Item {
 
                         Text {
                             Layout.fillWidth: true
-                            text: "HamClock opens in your normal browser for full-screen viewing."
-                            color: "#B8C9D2"
-                            font.pixelSize: 13
+                            text:
+                                "The callsign and locator come automatically "
+                                + "from the HRPU station profile."
+                            color: "#AFC1CB"
+                            font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
 
+                        DarkCheckBox {
+                            id: dxClusterEnabledCheck
+                            Layout.fillWidth: true
+                            text: "Connect to a live DX cluster"
+                            checked: backend.dxClusterEnabled
+                        }
+
                         Text {
-                            text: "HamClock URL"
+                            text: "DX-cluster host"
                             color: "#DCE8EE"
-                            font.pixelSize: 13
                             font.bold: true
                         }
 
                         DarkTextField {
-                            id: hamClockUrlField
+                            id: dxClusterHostField
                             Layout.fillWidth: true
-                            text: backend.hamClockUrl
-                            placeholderText: "Example: http://hamclock.local/"
-                            selectByMouse: true
+                            enabled: dxClusterEnabledCheck.checked
+                            text: backend.dxClusterHost
+                            placeholderText: "Example: cluster.example.net"
                         }
 
                         RowLayout {
-                            spacing: 10
+                            Layout.fillWidth: true
 
+                            ColumnLayout {
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Port"
+                                    color: "#DCE8EE"
+                                    font.bold: true
+                                }
+
+                                SpinBox {
+                                    id: dxClusterPortBox
+                                    Layout.fillWidth: true
+                                    enabled:
+                                        dxClusterEnabledCheck.checked
+                                    from: 1
+                                    to: 65535
+                                    value: backend.dxClusterPort
+                                    editable: true
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: "Login callsign"
+                                    color: "#DCE8EE"
+                                    font.bold: true
+                                }
+
+                                DarkTextField {
+                                    id: dxClusterLoginField
+                                    Layout.fillWidth: true
+                                    enabled:
+                                        dxClusterEnabledCheck.checked
+                                    text: backend.dxClusterLogin
+                                    placeholderText:
+                                        "Blank uses station callsign"
+                                }
+                            }
+                        }
+
+                        DarkCheckBox {
+                            id: propagationDemoCheck
+                            Layout.fillWidth: true
+                            text:
+                                "Use demo spots when no live spots are available"
+                            checked: backend.propagationDemoMode
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 280
+                    radius: 10
+                    color: "#10212C"
+                    border.color: "#C99B16"
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 20
+                        spacing: 12
+
+                        Text {
+                            text: "Maintenance & Privacy"
+                            color: "#FFD55A"
+                            font.pixelSize: 18
+                            font.bold: true
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Fresh installations contain no callsign, locator, DMR ID, email address, password, API key or private URL."
+                            color: "#DCE8EE"
+                            wrapMode: Text.WordWrap
+                        }
+
+                        RowLayout {
                             Button {
-                                text: "Test"
-                                onClicked: backend.testWebUrl(hamClockUrlField.text)
+                                text: "Export Settings"
+                                onClicked: backend.exportPreferences()
                             }
 
                             Button {
-                                text: "Open"
-                                onClicked: backend.openHamClock()
+                                text: "Open Settings Folder"
+                                onClicked: backend.openSettingsFolder()
                             }
+                        }
 
-                            Item { Layout.fillWidth: true }
+                        Button {
+                            text: "Reset Preferences"
+                            onClicked: backend.resetPreferences()
                         }
                     }
                 }
@@ -341,29 +486,43 @@ Item {
                 Layout.fillWidth: true
 
                 Button {
+                    implicitWidth: 190
                     text: "Save Preferences"
+
                     onClicked: backend.savePreferences(
                         themeBox.currentText,
                         splashCheck.checked,
                         scanCheck.checked,
                         updateCheck.checked,
-                        hamClockUrlField.text,
                         catPortField.text,
                         audioDeviceField.text,
                         sdrField.text,
                         updateChannelBox.currentText,
-                        backupCheck.checked
+                        backupCheck.checked,
+                        spectrumPeakHoldCheck.checked,
+                        spectrumDecayBox.currentText,
+                        startAtLoginCheck.checked,
+                        dxClusterHostField.text,
+                        dxClusterPortBox.value,
+                        dxClusterLoginField.text,
+                        dxClusterEnabledCheck.checked,
+                        propagationDemoCheck.checked
                     )
                 }
 
                 Button {
+                    implicitWidth: 180
                     text: "Reload Saved Values"
+
                     onClicked: {
-                        themeBox.currentIndex = Math.max(0, themeBox.find(backend.themeName))
+                        themeBox.currentIndex = Math.max(
+                            0,
+                            themeBox.find(backend.themeName)
+                        )
                         splashCheck.checked = backend.showSplash
                         scanCheck.checked = backend.autoScan
                         updateCheck.checked = backend.checkUpdates
-                        hamClockUrlField.text = backend.hamClockUrl
+                        startAtLoginCheck.checked = backend.startAtLogin
                         catPortField.text = backend.defaultCatPort
                         audioDeviceField.text = backend.defaultAudioDevice
                         sdrField.text = backend.preferredSdr
@@ -372,13 +531,31 @@ Item {
                             updateChannelBox.find(backend.updateChannel)
                         )
                         backupCheck.checked = backend.backupBeforeUpdates
+                        spectrumPeakHoldCheck.checked =
+                            backend.spectrumPeakHoldDefault
+                        spectrumDecayBox.currentIndex = Math.max(
+                            0,
+                            spectrumDecayBox.find(
+                                backend.spectrumPeakDecayDefault
+                            )
+                        )
+                        dxClusterHostField.text =
+                            backend.dxClusterHost
+                        dxClusterPortBox.value =
+                            backend.dxClusterPort
+                        dxClusterLoginField.text =
+                            backend.dxClusterLogin
+                        dxClusterEnabledCheck.checked =
+                            backend.dxClusterEnabled
+                        propagationDemoCheck.checked =
+                            backend.propagationDemoMode
                     }
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
             }
-
-            Item { Layout.preferredHeight: 12 }
         }
     }
 }

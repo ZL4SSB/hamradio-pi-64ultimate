@@ -12,18 +12,38 @@ ApplicationWindow {
     minimumHeight: 760
     visible: true
     title: backend.appName + " " + backend.appVersion
-    color: "#06151F"
+
+    property string activeTheme: backend.themeName
+    property color shellBackground:
+        activeTheme === "Dark Blue" ? "#08111E" :
+        activeTheme === "Radio Green" ? "#07120C" :
+        activeTheme === "Amber Radio" ? "#171108" :
+        activeTheme === "High Contrast" ? "#000000" :
+        "#06151F"
+    property color shellHeader:
+        activeTheme === "Dark Blue" ? "#0B1728" :
+        activeTheme === "Radio Green" ? "#0B1C12" :
+        activeTheme === "Amber Radio" ? "#241907" :
+        activeTheme === "High Contrast" ? "#080808" :
+        "#04121B"
+    property color shellSidebar:
+        activeTheme === "Dark Blue" ? "#0B1728" :
+        activeTheme === "Radio Green" ? "#0B1C12" :
+        activeTheme === "Amber Radio" ? "#211707" :
+        activeTheme === "High Contrast" ? "#080808" :
+        "#071923"
+    property color shellText: "#F4F8FA"
+
+    color: shellBackground
 
     property var navItems: [
         ["Dashboard", "⌂"],
         ["Applications", "▦"],
-        ["Hardware Manager", "⌁"],
         ["Radio Dashboards", "▤"],
         ["WPSD Centre", "▣"],
         ["Propagation", "☀"],
-        ["Station Profile", "♙"],
-        ["Updates", "◯"],
-        ["System Tools", "⌕"],
+        ["Shack Clock", "◷"],
+        ["Station Tools", "⚙"],
         ["Preferences", "⚙"],
         ["Help", "?"],
         ["About", "ⓘ"]
@@ -36,7 +56,7 @@ ApplicationWindow {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 62
-            color: "#04121B"
+            color: window.shellHeader
 
             RowLayout {
                 anchors.fill: parent
@@ -52,7 +72,7 @@ ApplicationWindow {
 
                 Text {
                     text: backend.appName
-                    color: "#F4F8FA"
+                    color: window.shellText
                     font.pixelSize: 20
                     font.bold: true
                 }
@@ -90,7 +110,7 @@ ApplicationWindow {
             Rectangle {
                 Layout.preferredWidth: 250
                 Layout.fillHeight: true
-                color: "#071923"
+                color: window.shellSidebar
                 border.color: "#244D5D"
 
                 ColumnLayout {
@@ -107,16 +127,7 @@ ApplicationWindow {
                             text: modelData[0]
                             iconText: modelData[1]
                             selected: backend.currentPage === modelData[0]
-                            onClicked: {
-                                var page = modelData[0]
-                                if (page === "Hardware Manager")
-                                    page = "Hardware"
-                                else if (page === "System Tools")
-                                    page = "Tools"
-                                else if (page === "Help")
-                                    page = "Help & Logs"
-                                backend.setPage(page)
-                            }
+                            onClicked: backend.setPage(modelData[0])
                         }
                     }
 
@@ -196,15 +207,14 @@ ApplicationWindow {
                     switch (backend.currentPage) {
                     case "Dashboard": return dashboard
                     case "Applications": return applications
-                    case "Hardware": return hardware
                     case "Radio Dashboards": return radioDashboards
-                    case "Station Profile": return station
-                    case "Preferences": return preferences
                     case "WPSD Centre": return wpsd
                     case "Propagation": return propagation
-                    case "Updates": return updates
-                    case "Tools": return tools
-                    case "Help & Logs": return help
+                    case "Shack Clock": return shackClock
+                    case "Station Profile": return station
+                    case "Station Tools": return stationTools
+                    case "Preferences": return preferences
+                    case "Help": return help
                     case "About": return about
                     default: return dashboard
                     }
@@ -215,64 +225,19 @@ ApplicationWindow {
 
     Component { id: dashboard; Dashboard {} }
     Component { id: applications; Applications {} }
-    Component { id: hardware; Hardware {} }
     Component { id: radioDashboards; RadioDashboards {} }
     Component { id: station; Station {} }
+    Component { id: stationTools; StationTools {} }
     Component { id: preferences; Preferences {} }
 
-    Component {
-        id: wpsd
-        Generic {
-            pageTitle: "WPSD Centre"
-            pageSubtitle: "Download, flash, back up, restore and configure WPSD media."
-            cards: [
-                "Download WPSD Image",
-                "Detect SD Cards",
-                "Flash Image",
-                "Verify Image",
-                "Back Up Card",
-                "Restore Card",
-                "Configure Wi-Fi",
-                "Configure Callsign"
-            ]
-        }
-    }
+    Component { id: wpsd; WpsdCentre {} }
 
     Component { id: propagation; Propagation {} }
+    Component { id: shackClock; ShackClock {} }
 
-    Component { id: updates; Updates {} }
 
-    Component { id: tools; SystemTools {} }
 
-    Component {
-        id: help
-        Generic {
-            pageTitle: "Help & Logs"
-            pageSubtitle: "Troubleshooting, documentation and application logs."
-            cards: [
-                "Quick Start",
-                "User Guide",
-                "Application Log",
-                "Hardware Log",
-                "Installation Log",
-                "Create Support Bundle"
-            ]
-        }
-    }
+    Component { id: help; Help {} }
 
-    Component {
-        id: about
-        Generic {
-            pageTitle: "About"
-            pageSubtitle: backend.appName + " " + backend.appVersion
-            cards: [
-                "Project Information",
-                "Licence",
-                "GitHub Repository",
-                "Donate",
-                "Credits",
-                "System Information"
-            ]
-        }
-    }
+    Component { id: about; About {} }
 }

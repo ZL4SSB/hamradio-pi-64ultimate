@@ -5,7 +5,7 @@ cd /d "%~dp0"
 
 echo.
 echo ============================================================
-echo          HamRadio-Pi Ultimate 4.6.0 Installer
+echo          HamRadio-Pi Ultimate 1.2.0 Installer
 echo ============================================================
 echo.
 echo This installer will:
@@ -54,6 +54,17 @@ echo Verifying installation...
 if errorlevel 1 goto :failed
 
 echo.
+echo.
+choice /C YN /N /M "Create Desktop shortcut? [Y/N]: "
+if errorlevel 2 (set "CREATE_DESKTOP=0") else (set "CREATE_DESKTOP=1")
+
+choice /C YN /N /M "Create Start Menu shortcut? [Y/N]: "
+if errorlevel 2 (set "CREATE_STARTMENU=0") else (set "CREATE_STARTMENU=1")
+
+choice /C YN /N /M "Launch HamRadio-Pi Ultimate after installation? [Y/N]: "
+if errorlevel 2 (set "LAUNCH_AFTER=0") else (set "LAUNCH_AFTER=1")
+
+echo.
 echo Creating shortcuts...
 
 set "VBS_FILE=%TEMP%\hamradio_pi_shortcuts_%RANDOM%.vbs"
@@ -61,27 +72,37 @@ set "VBS_FILE=%TEMP%\hamradio_pi_shortcuts_%RANDOM%.vbs"
 > "%VBS_FILE%" echo Set shell = CreateObject("WScript.Shell")
 >>"%VBS_FILE%" echo project = "%~dp0"
 >>"%VBS_FILE%" echo target = project ^& "Start-HamRadio-Pi-Ultimate.bat"
->>"%VBS_FILE%" echo iconFile = project ^& "assets\branding\hamradio-pi-256.png"
->>"%VBS_FILE%" echo desktop = shell.SpecialFolders("Desktop")
->>"%VBS_FILE%" echo startMenu = shell.SpecialFolders("Programs")
->>"%VBS_FILE%" echo Set link = shell.CreateShortcut(desktop ^& "\HamRadio-Pi Ultimate.lnk")
->>"%VBS_FILE%" echo link.TargetPath = target
->>"%VBS_FILE%" echo link.WorkingDirectory = project
->>"%VBS_FILE%" echo link.Description = "HamRadio-Pi Ultimate"
->>"%VBS_FILE%" echo link.Save
->>"%VBS_FILE%" echo Set link2 = shell.CreateShortcut(startMenu ^& "\HamRadio-Pi Ultimate.lnk")
->>"%VBS_FILE%" echo link2.TargetPath = target
->>"%VBS_FILE%" echo link2.WorkingDirectory = project
->>"%VBS_FILE%" echo link2.Description = "HamRadio-Pi Ultimate"
->>"%VBS_FILE%" echo link2.Save
+>>"%VBS_FILE%" echo iconFile = project ^& "assets\branding\hamradio-pi-ultimate.ico"
+>>"%VBS_FILE%" echo If "%CREATE_DESKTOP%" = "1" Then
+>>"%VBS_FILE%" echo   desktop = shell.SpecialFolders("Desktop")
+>>"%VBS_FILE%" echo   Set link = shell.CreateShortcut(desktop ^& "\HamRadio-Pi Ultimate.lnk")
+>>"%VBS_FILE%" echo   link.TargetPath = target
+>>"%VBS_FILE%" echo   link.WorkingDirectory = project
+>>"%VBS_FILE%" echo   link.IconLocation = iconFile
+>>"%VBS_FILE%" echo   link.Description = "HamRadio-Pi Ultimate"
+>>"%VBS_FILE%" echo   link.Save
+>>"%VBS_FILE%" echo End If
+>>"%VBS_FILE%" echo If "%CREATE_STARTMENU%" = "1" Then
+>>"%VBS_FILE%" echo   startMenu = shell.SpecialFolders("Programs")
+>>"%VBS_FILE%" echo   folder = startMenu ^& "\HamRadio-Pi Ultimate"
+>>"%VBS_FILE%" echo   CreateObject("Scripting.FileSystemObject").CreateFolder(folder)
+>>"%VBS_FILE%" echo   Set link2 = shell.CreateShortcut(folder ^& "\HamRadio-Pi Ultimate.lnk")
+>>"%VBS_FILE%" echo   link2.TargetPath = target
+>>"%VBS_FILE%" echo   link2.WorkingDirectory = project
+>>"%VBS_FILE%" echo   link2.IconLocation = iconFile
+>>"%VBS_FILE%" echo   link2.Description = "HamRadio-Pi Ultimate"
+>>"%VBS_FILE%" echo   link2.Save
+>>"%VBS_FILE%" echo End If
 
 cscript //nologo "%VBS_FILE%"
 del /q "%VBS_FILE%" >nul 2>&1
 
 echo.
 echo Installation complete.
-echo Starting HamRadio-Pi Ultimate...
-start "" "%~dp0Start-HamRadio-Pi-Ultimate.bat"
+if "%LAUNCH_AFTER%" = "1" (
+    echo Starting HamRadio-Pi Ultimate...
+    start "" "%~dp0Start-HamRadio-Pi-Ultimate.bat"
+)
 exit /b 0
 
 :failed

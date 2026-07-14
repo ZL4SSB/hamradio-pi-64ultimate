@@ -1,300 +1,293 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtWebEngine
 
 Item {
     id: page
+    property string localUrl: "http://127.0.0.1:8765"
 
-    Flickable {
+    ColumnLayout {
         anchors.fill: parent
-        contentWidth: width
-        contentHeight: contentColumn.implicitHeight + 24
-        clip: true
+        spacing: 10
 
-        ColumnLayout {
-            id: contentColumn
-            width: parent.width
-            spacing: 14
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 82
+            radius: 9
+            color: "#0D202B"
+            border.color: "#365E70"
 
             RowLayout {
-                Layout.fillWidth: true
+                anchors.fill: parent
+                anchors.margins: 13
+                spacing: 10
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 2
+                    spacing: 3
 
                     Text {
-                        text: "Propagation"
+                        text: "Ultimate Live Propagation"
                         color: "#F5F9FB"
-                        font.pixelSize: 28
+                        font.pixelSize: 23
                         font.bold: true
                     }
 
                     Text {
-                        text: "Live solar and geomagnetic conditions for amateur radio."
-                        color: "#A4B7C2"
-                        font.pixelSize: 14
+                        text: backend.propagationServerDetail
+                        color: "#AFC1CB"
+                        font.pixelSize: 11
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Rectangle {
+                    implicitWidth: 108
+                    implicitHeight: 34
+                    radius: 17
+                    color:
+                        backend.propagationServerStatus === "Running"
+                        ? "#173D2A"
+                        : backend.propagationServerStatus === "Connection Error"
+                          ? "#4B2025"
+                          : "#3B3118"
+                    border.color:
+                        backend.propagationServerStatus === "Running"
+                        ? "#61DC4C"
+                        : backend.propagationServerStatus === "Connection Error"
+                          ? "#F15B64"
+                          : "#F0C76D"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: backend.propagationServerStatus
+                        color: "#F4F8FA"
+                        font.pixelSize: 11
+                        font.bold: true
                     }
                 }
 
                 ColumnLayout {
-                    spacing: 2
+                    spacing: 1
 
                     Text {
-                        Layout.alignment: Qt.AlignRight
-                        text: backend.propagationStatus
-                        color: backend.propagationLoading ? "#F0C76D" : "#AFC1CB"
-                        font.pixelSize: 12
+                        text: "Last update"
+                        color: "#8FA7B5"
+                        font.pixelSize: 9
                     }
 
                     Text {
-                        Layout.alignment: Qt.AlignRight
-                        text: "Updated: " + backend.propagationUpdated
-                        color: "#819AA7"
-                        font.pixelSize: 11
+                        text: backend.propagationServerLastUpdate
+                        color: "#DCE8EE"
+                        font.pixelSize: 10
+                        font.bold: true
                     }
                 }
 
                 Button {
-                    text: backend.propagationLoading ? "Updating…" : "Refresh"
-                    enabled: !backend.propagationLoading
-                    onClicked: backend.refreshPropagation()
+                    text: "Start"
+                    enabled:
+                        backend.propagationServerStatus !== "Running"
+                    onClicked: backend.startPropagationServer()
                 }
 
                 Button {
-                    text: "Open NOAA"
-                    onClicked: backend.openNoaaSpaceWeather()
+                    text: "Stop"
+                    enabled:
+                        backend.propagationServerStatus === "Running"
+                        || backend.propagationServerStatus === "Connection Error"
+                    onClicked: backend.stopPropagationServer()
+                }
+
+                Button {
+                    text: "Restart"
+                    onClicked: backend.restartPropagationServer()
+                }
+
+                Button {
+                    text: "Refresh"
+                    onClicked: {
+                        backend.refreshPropagationServerStatus()
+                        propagationView.reload()
+                    }
                 }
             }
+        }
 
-            ProgressBar {
-                Layout.fillWidth: true
-                indeterminate: true
-                visible: backend.propagationLoading
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 36
+            radius: 7
+            color: "#10212C"
+            border.color: "#365E70"
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+
+                Text {
+                    text:
+                        "Cluster: "
+                        + backend.propagationClusterStatus
+                    color: "#BFD0D8"
+                    font.pixelSize: 11
+                }
+
+                Text {
+                    text:
+                        "Spots: "
+                        + backend.propagationSpotCount
+                    color: "#BFD0D8"
+                    font.pixelSize: 11
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    text:
+                        backend.callsign.length > 0
+                        ? backend.callsign
+                          + " · "
+                          + backend.locator
+                        : "Set callsign and locator from Dashboard → Edit Profile"
+                    color: "#18D6D2"
+                    font.pixelSize: 11
+                    font.bold: true
+                }
             }
+        }
 
-            GridLayout {
-                Layout.fillWidth: true
-                columns: 4
-                columnSpacing: 12
-                rowSpacing: 12
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            radius: 9
+            color: "#06151F"
+            border.color: "#365E70"
+            clip: true
 
-                Repeater {
-                    model: [
-                        {
-                            "title": "Solar Flux",
-                            "value": backend.solarFlux,
-                            "detail": "10.7 cm radio flux",
-                            "icon": "☀"
-                        },
-                        {
-                            "title": "Planetary Kp",
-                            "value": backend.kpIndex,
-                            "detail": backend.geomagneticState,
-                            "icon": "Kp"
-                        },
-                        {
-                            "title": "Solar Wind",
-                            "value": backend.solarWindSpeed,
-                            "detail": backend.solarWindDensity,
-                            "icon": "↝"
-                        },
-                        {
-                            "title": "Interplanetary Bz",
-                            "value": backend.solarWindBz,
-                            "detail": "GSM magnetic field",
-                            "icon": "Bz"
-                        },
-                        {
-                            "title": "X-Ray Level",
-                            "value": backend.xrayClass,
-                            "detail": "GOES soft X-ray class",
-                            "icon": "X"
-                        },
-                        {
-                            "title": "Geomagnetic State",
-                            "value": backend.geomagneticState,
-                            "detail": "Based on latest Kp",
-                            "icon": "◎"
-                        }
-                    ]
+            WebEngineView {
+                id: propagationView
+                anchors.fill: parent
+                anchors.margins: 1
+                url: page.localUrl
 
-                    delegate: Rectangle {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 145
-                        radius: 10
-                        color: "#10212C"
-                        border.color: "#365E70"
+                settings.javascriptEnabled: true
+                settings.localStorageEnabled: true
+                settings.fullScreenSupportEnabled: true
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 16
-                            spacing: 13
-
-                            Rectangle {
-                                Layout.preferredWidth: 48
-                                Layout.preferredHeight: 48
-                                radius: 9
-                                color: "#173746"
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: modelData.icon
-                                    color: "#18D6D2"
-                                    font.pixelSize: 20
-                                    font.bold: true
-                                }
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 5
-
-                                Text {
-                                    text: modelData.title
-                                    color: "#C9D8E0"
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: modelData.value
-                                    color: "#F5F9FB"
-                                    font.pixelSize: 23
-                                    font.bold: true
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: modelData.detail
-                                    color: "#8FA7B5"
-                                    font.pixelSize: 11
-                                    wrapMode: Text.WordWrap
-                                }
-                            }
-                        }
+                onLoadingChanged: function(request) {
+                    if (
+                        request.status
+                        === WebEngineView.LoadFailedStatus
+                    ) {
+                        errorText.text =
+                            "The local propagation page did not respond.\n\n"
+                            + request.errorString
+                        errorPanel.visible = true
+                    } else if (
+                        request.status
+                        === WebEngineView.LoadSucceededStatus
+                    ) {
+                        errorPanel.visible = false
+                        backend.refreshPropagationServerStatus()
                     }
                 }
             }
 
             Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 260
+                id: errorPanel
+                anchors.centerIn: parent
+                width: Math.min(
+                    parent.width - 50,
+                    640
+                )
+                height: 220
                 radius: 10
-                color: "#0D202B"
-                border.color: "#365E70"
+                visible:
+                    backend.propagationServerStatus
+                    !== "Running"
+                color: "#10212C"
+                border.color:
+                    backend.propagationServerStatus
+                    === "Connection Error"
+                    ? "#F15B64"
+                    : "#F0C76D"
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 18
+                    anchors.margins: 20
                     spacing: 12
 
-                    RowLayout {
-                        Layout.fillWidth: true
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: "Estimated HF Band Conditions"
-                            color: "#F5F9FB"
-                            font.pixelSize: 18
-                            font.bold: true
-                        }
-
-                        Text {
-                            text: "Guide only — actual paths vary by time, season and location"
-                            color: "#8FA7B5"
-                            font.pixelSize: 11
-                        }
-                    }
-
-                    GridLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        columns: 4
-                        columnSpacing: 10
-                        rowSpacing: 10
-
-                        Repeater {
-                            model: backend.hfConditions
-
-                            delegate: Rectangle {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                Layout.minimumHeight: 76
-                                radius: 8
-                                color: "#12313F"
-                                border.color: "#28566A"
-
-                                ColumnLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.band
-                                        color: "#F5F9FB"
-                                        font.pixelSize: 17
-                                        font.bold: true
-                                    }
-
-                                    Text {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        text: modelData.condition
-                                        color: modelData.colour
-                                        font.pixelSize: 14
-                                        font.bold: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 155
-                radius: 10
-                color: "#0D202B"
-                border.color: "#365E70"
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 18
-                    spacing: 8
-
                     Text {
-                        text: "What the readings mean"
-                        color: "#F5F9FB"
-                        font.pixelSize: 18
+                        text:
+                            "Local propagation server "
+                            + backend.propagationServerStatus
+                        color:
+                            backend.propagationServerStatus
+                            === "Connection Error"
+                            ? "#F15B64"
+                            : "#F0C76D"
+                        font.pixelSize: 19
                         font.bold: true
                     }
 
                     Text {
+                        id: errorText
                         Layout.fillWidth: true
-                        text: "Higher solar flux generally supports the higher HF bands. A low Kp usually means a quieter geomagnetic field. Strong M- or X-class X-ray events can cause short-term radio blackouts on sunlit paths. Solar-wind Bz turning strongly southward can precede disturbed geomagnetic conditions."
-                        color: "#C2D1D9"
-                        font.pixelSize: 13
+                        Layout.fillHeight: true
+                        text:
+                            backend.propagationServerDetail
+                        color: "#E5EEF3"
                         wrapMode: Text.WordWrap
                     }
 
-                    Text {
-                        Layout.fillWidth: true
-                        text: "Data source: NOAA Space Weather Prediction Center. Automatic refresh every five minutes."
-                        color: "#18D6D2"
-                        font.pixelSize: 12
+                    RowLayout {
+                        Button {
+                            text: "Start Server"
+                            onClicked:
+                                backend.startPropagationServer()
+                        }
+
+                        Button {
+                            text: "Restart"
+                            onClicked:
+                                backend.restartPropagationServer()
+                        }
+
+                        Button {
+                            text: "Try Page Again"
+                            onClicked: {
+                                backend.refreshPropagationServerStatus()
+                                propagationView.url = page.localUrl
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
+    Connections {
+        target: backend
+
+        function onPropagationServerChanged() {
+            if (
+                backend.propagationServerStatus
+                === "Running"
+                && errorPanel.visible
+            ) {
+                propagationView.url = page.localUrl
+            }
+        }
+    }
+
     Component.onCompleted: {
-        if (backend.propagationUpdated === "Never")
-            backend.refreshPropagation()
+        backend.ensurePropagationServer()
+        backend.refreshPropagationServerStatus()
     }
 }

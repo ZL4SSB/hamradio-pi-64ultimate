@@ -28,10 +28,67 @@ Item {
             Layout.fillWidth: true; implicitHeight: 66; radius: 9; color: "#0D202B"; border.color: "#285263"
             RowLayout {
                 anchors.fill: parent; anchors.margins: 10; spacing: 8
-                Button { text: "‹"; enabled: webView.canGoBack; onClicked: webView.goBack() }
-                Button { text: "›"; enabled: webView.canGoForward; onClicked: webView.goForward() }
-                Button { text: "⟳"; onClicked: webView.reload() }
-                Button { text: "Home"; onClicked: webView.url=backend.selectedDashboardHomeUrl }
+                Button {
+                    implicitWidth: 48
+                    implicitHeight: 42
+                    enabled: webView.canGoBack
+                    onClicked: webView.goBack()
+                    contentItem: Text {
+                        text: "‹"
+                        color: parent.enabled ? "#17313E" : "#8D9BA2"
+                        font.pixelSize: 31
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        radius: 7
+                        color: parent.hovered ? "#D7E3E8" : "#EEF3F6"
+                        border.color: "#6F8793"
+                    }
+                }
+                Button {
+                    implicitWidth: 48
+                    implicitHeight: 42
+                    enabled: webView.canGoForward
+                    onClicked: webView.goForward()
+                    contentItem: Text {
+                        text: "›"
+                        color: parent.enabled ? "#17313E" : "#8D9BA2"
+                        font.pixelSize: 31
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        radius: 7
+                        color: parent.hovered ? "#D7E3E8" : "#EEF3F6"
+                        border.color: "#6F8793"
+                    }
+                }
+                Button {
+                    implicitWidth: 48
+                    implicitHeight: 42
+                    onClicked: webView.reload()
+                    contentItem: Text {
+                        text: "⟳"
+                        color: "#17313E"
+                        font.pixelSize: 25
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        radius: 7
+                        color: parent.hovered ? "#D7E3E8" : "#EEF3F6"
+                        border.color: "#6F8793"
+                    }
+                }
+                Button {
+                    implicitHeight: 42
+                    text: "Home"
+                    onClicked: webView.url=backend.selectedDashboardHomeUrl
+                }
                 ComboBox {
                     id: selector; Layout.preferredWidth: 230; model: backend.dashboards; textRole: "name"; currentIndex: backend.selectedDashboardIndex
                     onActivated: function(index) { backend.selectDashboard(index); webView.url=backend.selectedDashboardUrl }
