@@ -16,8 +16,8 @@ Item {
             Layout.fillWidth: true
             ColumnLayout {
                 Layout.fillWidth: true
-                Text { text: "Radio Dashboards"; color: "#F5F9FB"; font.pixelSize: 28; font.bold: true }
-                Text { text: "EuroNode, Pi-Star, WPSD and other local radio dashboards."; color: "#A4B7C2"; font.pixelSize: 14 }
+                Text { text: "Radio over IP dashboards and hotspot status."; color: "#F5F9FB"; font.pixelSize: 28; font.bold: true }
+                Text { text: "EuroNode, Pi-Star, WPSD and other local ROIP dashboards."; color: "#A4B7C2"; font.pixelSize: 14 }
             }
             Button { text: "+ Add"; onClicked: { page.editingExisting=false; nameField.text=""; urlField.text="http://"; editor.open() } }
             Button { text: "Edit"; onClicked: { page.editingExisting=true; nameField.text=backend.selectedDashboardName; urlField.text=backend.selectedDashboardUrl; editor.open() } }

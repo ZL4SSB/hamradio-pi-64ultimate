@@ -1,4 +1,4 @@
-# Radio Dashboards
+# ROIP Dashboards
 
 EuroNode is preconfigured at `http://dvmega-euronode.local/`.
 

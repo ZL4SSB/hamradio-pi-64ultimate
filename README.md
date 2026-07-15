@@ -48,7 +48,7 @@ cd ~/hamradio-pi-64ultimate
 ```
 
 
-## Radio Dashboards
+## ROIP Dashboards
 
 Embedded EuroNode/MMDVM/Pi-Star/WPSD dashboard viewer with saved URLs, navigation, testing, zoom and external-browser support.
 
@@ -160,134 +160,92 @@ Audio is analysed in memory only. It is not saved or transmitted.
 - Checked all QML pages that use shared controls.
 
 
-## 4.7.0 — Ultimate Shack Clock
+## 4.6 Rebuilt R4 FIXED
 
-Added a native Shack Clock page with:
+Rebuilt from the known-working PyQt6 4.6.4 baseline.
 
-- local and UTC clocks
-- station identity
-- sunrise and sunset from Maidenhead locator
-- daylight/night state
-- simplified greyline display
-- NOAA propagation readings
-- estimated HF band conditions
-- optional external clock fallback
+Hardware Manager, Station Profile and Preferences are accessible only through
+System Tools. Dashboard station details are display-only.
 
-The Dashboard HamClock button now opens the built-in Shack Clock.
+Applications now performs installed-state checks and shows Remove for installed
+programs. Linux removal uses apt with sudo confirmation. Windows uses the
+registered uninstaller.
 
 
-## 4.8.0 beta — Animated startup test
+## 4.6 Rebuilt R5 — Full replacement build
 
-This beta adds an original five-second animated startup sequence featuring:
+This is a full replacement build based on the fixed PyQt6 R4 baseline and
+carries the existing System Tools consolidation and Applications manager
+forward.
 
-- rotating stylised Earth
-- orbiting generic Ultimate controller board
-- amateur-radio tower
-- animated RF wavefronts
-- star field
-- loading bar
-- Donate button
-- Skip button available after two seconds
+### Propagation
+- Removed the Solar Wind card.
+- Removed the Interplanetary Bz card.
+- Added a live local greyline world map directly below Estimated HF Band Conditions.
+- The map calculates the solar position and day/night twilight from UTC.
+- The saved HRPU Maidenhead locator is used for the station marker.
+- No Google Maps, Snazzy Maps, Mapbox, Esri tiles, external map tiles or API key are required.
 
-The animation uses original QML artwork and does not copy a movie-studio logo
-or use official Raspberry Pi board artwork.
-
-
-## 4.8.1 beta — Desktop integration
-
-Installers now provide:
-
-### Windows
-
-- optional Desktop shortcut
-- optional Start Menu folder and shortcut
-- HRPU multi-resolution `.ico`
-- no-console launcher
-- optional launch after installation
-- optional start at login under Preferences
-
-### Raspberry Pi
-
-- optional Desktop shortcut
-- Ham Radio application-menu category
-- HRPU PNG icon
-- `hamradio-pi-ultimate` launcher command
-- optional launch after installation
-- optional start at login under Preferences
+### ROIP
+- Renamed the visible Radio Dashboards menu/page wording to ROIP Dashboards.
+- ROIP is identified as Radio over IP.
 
 
-# 4.9.0-pre1 — Final consolidation before v1.0
+## 4.6 Rebuilt R6 — Radio Map and propagation awareness
 
-- final simplified sidebar
-- Station Tools consolidation
-- hardware and driver overview
-- audio meter and spectrum
-- network, storage, update and diagnostic tools
-- NTP/GPS/PPS time status
-- native Shack Clock
-- fresh-install privacy
-- polished About and Help
-- Windows and Raspberry Pi shortcuts and installers
+R6 keeps the fixed proprietary-capable HRPU codebase and does not merge GPL
+Decodium or WSJT-X source.
 
+New Propagation functions:
+- Large DXChrono-inspired but independently implemented Radio Map / greyline workspace.
+- Click target for bearing, long-path bearing, distance, sunrise, sunset and greyline window.
+- Station marker from the saved Maidenhead locator.
+- Overlay controls for DX, decoded activity, WSPR, beacons, grid, sun and paths.
+- Demo spot lifecycle/framework ready for documented live data adapters.
+- NCDXF/IARU beacon schedule panel.
+- VHF propagation awareness cards.
+- Major meteor-shower awareness and ZHR display.
+- HRPU propagation-confidence framework ready to combine live observed WSPR,
+  PSK Reporter and DX Cluster activity with the solar model.
 
-## 4.9.1-pre1 corrections
-
-- removed propagation and HF condition cards from Shack Clock
-- fixed Dashboard View Full Log
-- removed Station Profile from sidebar
-- replaced WPSD placeholder with working actions
-- rebuilt Propagation in a clear solar-conditions layout inspired by W5MMW
-- fixed Help navigation
-- rebuilt About layout
-- expanded Preferences to five visible theme choices
+No Decodium source was copied or merged.
 
 
-# Version 1.0.0
+## 4.6 Rebuilt R7 — Unified Core
 
-HamRadio-Pi Ultimate 1.0.0 is the first completed public release.
+R7 carries the complete R6 baseline forward and adds a new shared station-core
+architecture.
 
-Highlights:
+New first-class workspaces:
 
-- final simplified menu
-- live W5MMW propagation page
-- native Shack Clock
-- Radio Dashboards for EuroNode, WPSD and MMDVM
-- operational WPSD Centre
-- Applications manager
-- Station Tools with hardware, drivers, audio, time, network, storage,
-  updates, diagnostics and backups
-- live microphone spectrum with Peak Hold
-- selectable application themes
-- Windows Desktop and Start Menu shortcuts
-- Raspberry Pi Desktop and Ham Radio menu entries
-- anonymous public installation without a GitHub account
-- blank personal information on fresh installations
+- Radio
+- Digital
+- Logbook
+- Satellites & Rotator
 
+New shared services:
 
-# Version 1.1.0 — Native propagation
+- HRPU Radio State
+- CAT Broker boundary with Hamlib detection
+- Radio audio-routing profiles
+- Digital workspace state and map-feed model
+- SQLite QSO logbook
+- ADIF export
+- Satellite/rotator state boundary
 
-- integrated the HRPU propagation module into the main project
-- removed the W5MMW/LU9DA-style external propagation dependency
-- bundled local coastline and callsign-prefix data
-- added a stdlib-only local server on `127.0.0.1:8765`
-- embedded propagation inside the HRPU window
-- reused callsign and locator from Station Profile automatically
-- added DX-cluster host, port, login, enable and demo-mode Preferences
-- added Running, Stopped, Connection Error and Last Update states
-- added Start, Stop, Restart and Refresh controls
-- added Raspberry Pi user-systemd automatic startup
-- added Windows automatic child-process startup
-- preserved user settings through public updates
-- added clean service/launcher uninstall handling
+The R7 Digital and satellite pages clearly label preview data. They are not
+presented as completed live RF decoders or live TLE tracking.
 
+See `docs/UNIFIED-CORE.md`.
+# HamRadio-Pi Ultimate 4.7.1 Functional Completion
 
-# Version 1.2.0 — Cinematic startup system
+The 4.7.1 replacement build preserves the 4.6/R7 workspaces and introduces tested,
+platform-neutral station services. See `docs/STATION-CORE-ARCHITECTURE.md` for the
+ownership rules and provider boundaries. Features without configured adapters
+remain explicitly marked PREVIEW, DEMO, or unavailable.
 
-- added WebM cinematic intro playback
-- automatic 720p Raspberry Pi / 1080p Windows selection
-- real startup stage and percentage display
-- skip control after two seconds
-- silent playback by default
-- automatic animated fallback if video is missing or fails
-- no black-screen wait for failed video
-- Blender render specification and asset naming included
+Application cards now install (Raspberry Pi), launch, remove and open dedicated
+help. WPSD operations that require a future privileged media provider open a
+safety guide and report unavailable; they never claim a destructive operation
+succeeded. Digital decoding/modulation and live satellite tracking likewise
+remain clearly labelled provider boundaries.

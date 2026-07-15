@@ -12,39 +12,19 @@ ApplicationWindow {
     minimumHeight: 760
     visible: true
     title: backend.appName + " " + backend.appVersion
-
-    property string activeTheme: backend.themeName
-    property color shellBackground:
-        activeTheme === "Dark Blue" ? "#08111E" :
-        activeTheme === "Radio Green" ? "#07120C" :
-        activeTheme === "Amber Radio" ? "#171108" :
-        activeTheme === "High Contrast" ? "#000000" :
-        "#06151F"
-    property color shellHeader:
-        activeTheme === "Dark Blue" ? "#0B1728" :
-        activeTheme === "Radio Green" ? "#0B1C12" :
-        activeTheme === "Amber Radio" ? "#241907" :
-        activeTheme === "High Contrast" ? "#080808" :
-        "#04121B"
-    property color shellSidebar:
-        activeTheme === "Dark Blue" ? "#0B1728" :
-        activeTheme === "Radio Green" ? "#0B1C12" :
-        activeTheme === "Amber Radio" ? "#211707" :
-        activeTheme === "High Contrast" ? "#080808" :
-        "#071923"
-    property color shellText: "#F4F8FA"
-
-    color: shellBackground
+    color: "#06151F"
 
     property var navItems: [
         ["Dashboard", "⌂"],
+        ["Radio", "◉"],
+        ["Digital", "≈"],
+        ["Logbook", "✎"],
         ["Applications", "▦"],
-        ["Radio Dashboards", "▤"],
+        ["ROIP Dashboards", "▤"],
         ["WPSD Centre", "▣"],
         ["Propagation", "☀"],
-        ["Shack Clock", "◷"],
-        ["Station Tools", "⚙"],
-        ["Preferences", "⚙"],
+        ["Satellites & Rotator", "◌"],
+        ["System Tools", "⌕"],
         ["Help", "?"],
         ["About", "ⓘ"]
     ]
@@ -56,7 +36,7 @@ ApplicationWindow {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 62
-            color: window.shellHeader
+            color: "#04121B"
 
             RowLayout {
                 anchors.fill: parent
@@ -72,7 +52,7 @@ ApplicationWindow {
 
                 Text {
                     text: backend.appName
-                    color: window.shellText
+                    color: "#F4F8FA"
                     font.pixelSize: 20
                     font.bold: true
                 }
@@ -84,6 +64,15 @@ ApplicationWindow {
                 }
 
                 Item { Layout.fillWidth: true }
+
+                Text {
+                    text: backend.radioState.frequency + " MHz"
+                          + "   " + backend.radioState.band
+                          + "   " + backend.radioState.mode
+                    color: "#18D6D2"
+                    font.pixelSize: 13
+                    font.bold: true
+                }
 
                 Rectangle {
                     radius: 8
@@ -110,7 +99,7 @@ ApplicationWindow {
             Rectangle {
                 Layout.preferredWidth: 250
                 Layout.fillHeight: true
-                color: window.shellSidebar
+                color: "#071923"
                 border.color: "#244D5D"
 
                 ColumnLayout {
@@ -127,7 +116,16 @@ ApplicationWindow {
                             text: modelData[0]
                             iconText: modelData[1]
                             selected: backend.currentPage === modelData[0]
-                            onClicked: backend.setPage(modelData[0])
+                            onClicked: {
+                                var page = modelData[0]
+                                if (page === "Hardware Manager")
+                                    page = "Hardware"
+                                else if (page === "System Tools")
+                                    page = "Tools"
+                                else if (page === "Help")
+                                    page = "Help & Logs"
+                                backend.setPage(page)
+                            }
                         }
                     }
 
@@ -206,15 +204,16 @@ ApplicationWindow {
                 sourceComponent: {
                     switch (backend.currentPage) {
                     case "Dashboard": return dashboard
+                    case "Radio": return radioControl
+                    case "Digital": return digital
+                    case "Logbook": return logbook
                     case "Applications": return applications
-                    case "Radio Dashboards": return radioDashboards
+                    case "ROIP Dashboards": return radioDashboards
                     case "WPSD Centre": return wpsd
                     case "Propagation": return propagation
-                    case "Shack Clock": return shackClock
-                    case "Station Profile": return station
-                    case "Station Tools": return stationTools
-                    case "Preferences": return preferences
-                    case "Help": return help
+                    case "Satellites & Rotator": return satellites
+                    case "Tools": return tools
+                    case "Help & Logs": return help
                     case "About": return about
                     default: return dashboard
                     }
@@ -224,20 +223,52 @@ ApplicationWindow {
     }
 
     Component { id: dashboard; Dashboard {} }
+    Component { id: radioControl; RadioControl {} }
+    Component { id: digital; Digital {} }
+    Component { id: logbook; Logbook {} }
     Component { id: applications; Applications {} }
     Component { id: radioDashboards; RadioDashboards {} }
-    Component { id: station; Station {} }
-    Component { id: stationTools; StationTools {} }
-    Component { id: preferences; Preferences {} }
 
-    Component { id: wpsd; WpsdCentre {} }
+    Component {
+        id: wpsd
+        Generic {
+            pageTitle: "WPSD Centre"
+            pageSubtitle: "Download, flash, back up, restore and configure WPSD media."
+            cards: [
+                "Download WPSD Image",
+                "Detect SD Cards",
+                "Flash Image",
+                "Verify Image",
+                "Back Up Card",
+                "Restore Card",
+                "Configure Wi-Fi",
+                "Configure Callsign"
+            ]
+            onCardClicked: function(card) { backend.runWorkspaceAction("WPSD Centre", card) }
+        }
+    }
 
     Component { id: propagation; Propagation {} }
-    Component { id: shackClock; ShackClock {} }
+    Component { id: satellites; Satellites {} }
 
-
+    Component { id: tools; SystemTools {} }
 
     Component { id: help; Help {} }
 
-    Component { id: about; About {} }
+    Component {
+        id: about
+        Generic {
+            pageTitle: "About"
+            pageSubtitle: backend.appName + " " + backend.appVersion
+            cards: [
+                "Project Information",
+                "Licence",
+                "GitHub Repository",
+                "Donate",
+                "Credits",
+                "System Information"
+            ]
+            onCardClicked: function(card) { backend.runWorkspaceAction("About", card) }
+        }
+    }
 }

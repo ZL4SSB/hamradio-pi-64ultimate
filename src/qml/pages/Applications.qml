@@ -43,10 +43,21 @@ Item {
                 }
             }
 
-            Text {
-                text: appGrid.count + " application" + (appGrid.count === 1 ? "" : "s")
-                color: "#8FA7B5"
-                font.pixelSize: 13
+            ColumnLayout {
+                spacing: 4
+
+                Text {
+                    text: appGrid.count + " application"
+                          + (appGrid.count === 1 ? "" : "s")
+                    color: "#8FA7B5"
+                    font.pixelSize: 13
+                    Layout.alignment: Qt.AlignRight
+                }
+
+                Button {
+                    text: "Check Installed"
+                    onClicked: backend.refreshApplications()
+                }
             }
         }
 
@@ -188,11 +199,23 @@ Item {
                                         if (modelData.installed) {
                                             backend.launchApplication(modelData.command)
                                         } else {
-                                            backend.setNotification(
-                                                "Installation of " + modelData.name
-                                                + " is available on Raspberry Pi OS."
-                                            )
+                                            backend.installApplication(modelData.package)
                                         }
+                                    }
+                                }
+
+                                Button {
+                                    text: "Help"
+                                    onClicked: backend.openApplicationHelp(modelData.name)
+                                }
+
+                                Button {
+                                    visible: modelData.installed
+                                    text: "Remove"
+                                    onClicked: {
+                                        removeDialog.packageName = modelData.package
+                                        removeDialog.appName = modelData.name
+                                        removeDialog.open()
                                     }
                                 }
 
@@ -220,4 +243,29 @@ Item {
             }
         }
     }
+
+    Dialog {
+        id: removeDialog
+        property string packageName: ""
+        property string appName: ""
+
+        title: "Remove " + appName + "?"
+        modal: true
+        anchors.centerIn: Overlay.overlay
+        standardButtons: Dialog.Yes | Dialog.Cancel
+
+        contentItem: Text {
+            width: 410
+            padding: 14
+            text:
+                "HRPU will hand removal to the operating system.\n\n"
+                + "Raspberry Pi/Linux uses apt and asks for sudo confirmation.\n"
+                + "Windows opens the registered application uninstaller."
+            color: "#F4F8FA"
+            wrapMode: Text.WordWrap
+        }
+
+        onAccepted: backend.removeApplication(packageName)
+    }
+
 }

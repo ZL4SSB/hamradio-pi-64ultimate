@@ -11,7 +11,7 @@ Item {
             "title": "Quick Start",
             "category": "Getting Started",
             "summary": "Install, start and complete the first setup.",
-            "body": "1. Install HamRadio-Pi Ultimate using Install-Windows.bat or install.sh.\n\n2. From the Dashboard, select Edit Profile and enter your callsign, locator, operator name, QTH and DMR ID.\n\n3. Open Preferences and choose appearance, startup, hardware and update options.\n\n4. Use Station Tools → Hardware to scan connected radios, SDRs, USB audio and serial interfaces.\n\n5. Use the left menu to open Propagation, Radio Dashboards, Station Tools and the Applications manager.",
+            "body": "1. Install HamRadio-Pi Ultimate using Install-Windows.bat or install.sh.\n\n2. Open Station Profile and enter your callsign, locator, operator name, QTH and DMR ID.\n\n3. Open Preferences and choose startup, hardware and HamClock options.\n\n4. Use Hardware Manager to scan connected radios, SDRs, USB audio and serial interfaces.\n\n5. Use the left menu to open Propagation, ROIP Dashboards, System Tools and the Applications manager.",
             "document": "QUICK-START.md"
         },
         {
@@ -43,28 +43,57 @@ Item {
             "document": "PREFERENCES.md"
         },
         {
-            "title": "Ultimate Shack Clock",
-            "category": "Features",
-            "summary": "Native local/UTC clock, sunrise, sunset and station-time overview.",
-            "body": "Ultimate Shack Clock is built into HamRadio-Pi Ultimate. It uses your Station Profile locator for sunrise and sunset for sunrise and sunset. No external HamClock server is required.",
-            "document": "SHACK-CLOCK.md"
-        },
-        {
-            "title": "Radio Dashboards",
+            "title": "ROIP Dashboards",
             "category": "Features",
             "summary": "Embed EuroNode, Pi-Star, WPSD and other web dashboards.",
-            "body": "Radio Dashboards can store multiple local URLs. EuroNode is preconfigured with http://dvmega-euronode.local/. Use Add Dashboard for Pi-Star, WPSD, OpenWebRX, KiwiSDR or another local web interface.",
+            "body": "ROIP Dashboards can store multiple local URLs. EuroNode is preconfigured with http://dvmega-euronode.local/. Use Add Dashboard for Pi-Star, WPSD, OpenWebRX, KiwiSDR or another local web interface.",
             "document": "RADIO-DASHBOARDS.md"
         },
         {
             "title": "Propagation",
             "category": "Features",
-            "summary": "View the live W5MMW solar and propagation dashboard.",
-            "body": "Propagation displays the live Solar Conditions and Ham Radio Propagation page supplied by W5MMW. Use the built-in navigation buttons to refresh it or open it in your normal browser.",
+            "summary": "Understand NOAA solar and geomagnetic readings.",
+            "body": "Propagation downloads live NOAA space-weather data. Higher solar flux often helps higher HF bands. Lower Kp generally means quieter geomagnetic conditions. Band labels are estimates rather than guaranteed point-to-point forecasts.",
             "document": "PROPAGATION.md"
         },
         {
-            "title": "Station Tools",
+            "title": "Radio Workspace & CAT Broker", "category": "Built-in Workspaces",
+            "summary": "Radio state, frequency, modes, PTT and CAT ownership.",
+            "body": "The Radio workspace controls HRPU's shared station state. Configure a radio profile before enabling a physical CAT provider. Probe reports availability only; it does not claim a connected radio. External clients must use the broker endpoint instead of opening the serial port.",
+            "document": "RADIO-WORKSPACE.md"
+        },
+        {
+            "title": "Digital Workspace", "category": "Built-in Workspaces",
+            "summary": "Digital controls and the future decoder boundary.",
+            "body": "Mode, TX enable, auto-sequence, HALT, TUNE and signal selection belong here. Preview activity is test data, not decoded RF. Do not transmit until audio, CAT/PTT and licence-compliant decoder providers are configured.",
+            "document": "DIGITAL-WORKSPACE.md"
+        },
+        {
+            "title": "HRPU Logbook", "category": "Built-in Workspaces",
+            "summary": "Local SQLite logging and ADIF export.",
+            "body": "The Logbook uses current Radio State for frequency, band and mode. Enter callsign, reports, optional grid and notes, then save. ADIF export creates a portable file; online logbook uploads are not enabled without a configured adapter.",
+            "document": "LOGBOOK.md"
+        },
+        {
+            "title": "Satellites & Rotator", "category": "Built-in Workspaces",
+            "summary": "TLE, pass, rotator and Doppler provider boundaries.",
+            "body": "Displayed preview geometry is never a live satellite position. Live tracking requires a current TLE provider, station locator, clock, rotator provider and radio CAT profile.",
+            "document": "SATELLITES-ROTATOR.md"
+        },
+        {
+            "title": "WPSD Centre", "category": "Built-in Workspaces",
+            "summary": "Safe image, media and configuration workflow.",
+            "body": "WPSD media actions require a configured imaging provider. HRPU does not pretend to flash or verify media. Read the guide before selecting a destination disk because flashing destroys its previous contents.",
+            "document": "WPSD-CENTRE.md"
+        },
+        {
+            "title": "Managed Applications", "category": "External Programs",
+            "summary": "Install, launch, remove and get help for listed software.",
+            "body": "Applications are separate programs and do not become part of HRPU. On Raspberry Pi, Install opens apt with a confirmation terminal. Launch starts an installed command. Remove hands control to the operating system. Each application card has its own Help button.",
+            "document": "APPLICATIONS.md"
+        },
+        {
+            "title": "System Tools",
             "category": "Features",
             "summary": "Test audio, network, disk, USB and create diagnostics.",
             "body": "Use Detect Devices before audio testing. Start Monitor shows live microphone level, clipping, spectrum, dominant frequency and estimated bandwidth. Speaker Test plays a tone. Microphone Test records three seconds and reports the level. Network, disk and USB tests help isolate common setup faults.",
@@ -81,7 +110,7 @@ Item {
             "title": "Troubleshooting",
             "category": "Support",
             "summary": "Common startup, audio, WebEngine and installer fixes.",
-            "body": "Startup failure: run the application from a terminal and inspect reports/qml-startup-error.log.\n\nNo audio devices: confirm the USB sound card is connected, then run Detect Devices.\n\nRadio Dashboard not loading: confirm the URL opens in a normal browser and that both devices are on the same local network.\n\nPropagation unavailable: confirm internet and DNS using Station Tools.",
+            "body": "Startup failure: run the application from a terminal and inspect reports/qml-startup-error.log.\n\nNo audio devices: confirm the USB sound card is connected, then run Detect Devices.\n\nRadio Dashboard not loading: confirm the URL opens in a normal browser and that both devices are on the same local network.\n\nPropagation unavailable: confirm internet and DNS using System Tools.",
             "document": "TROUBLESHOOTING.md"
         }
     ]

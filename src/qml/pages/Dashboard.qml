@@ -90,11 +90,6 @@ Item {
                         InfoRow { label: "DMR ID:"; value: backend.dmrId; iconText: "▦" }
 
                         Item { Layout.fillHeight: true }
-
-                        Button {
-                            text: "♙  Edit Profile"
-                            onClicked: backend.setPage("Station Profile")
-                        }
                     }
 
                     Rectangle {
@@ -294,7 +289,7 @@ Item {
                                 text: "Hardware Scan"
                                 iconText: "⌕"
                                 onClicked: {
-                                    backend.setPage("Station Tools")
+                                    backend.setPage("Tools")
                                     backend.scanHardware()
                                 }
                             }
@@ -314,7 +309,7 @@ Item {
                                 Layout.fillWidth: true
                                 text: "System Tools"
                                 iconText: "⚙"
-                                onClicked: backend.setPage("Station Tools")
+                                onClicked: backend.setPage("Tools")
                             }
                             QuickTile {
                                 Layout.fillWidth: true
@@ -324,9 +319,9 @@ Item {
                             }
                             QuickTile {
                                 Layout.fillWidth: true
-                                text: "Shack Clock"
+                                text: "HamClock"
                                 iconText: "◷"
-                                onClicked: backend.setPage("Shack Clock")
+                                onClicked: backend.openHamClock()
                             }
                             QuickTile {
                                 Layout.fillWidth: true
@@ -418,7 +413,7 @@ Item {
 
                         Button {
                             text: "⚙  Manage Services"
-                            onClicked: backend.setPage("Station Tools")
+                            onClicked: backend.setPage("Tools")
                         }
                     }
                 }
@@ -475,7 +470,7 @@ Item {
 
                         Button {
                             text: "▤  View Full Log"
-                            onClicked: backend.openActivityLog()
+                            onClicked: backend.setPage("Help & Logs")
                         }
                     }
                 }

@@ -1,0 +1,141 @@
+[
+  {
+    "id": "wsjtx",
+    "name": "WSJT-X",
+    "description": "FT8, FT4, WSPR and weak-signal digital modes.",
+    "linux_packages": [
+      "wsjtx"
+    ],
+    "commands": [
+      "wsjtx"
+    ],
+    "windows_commands": [
+      "wsjtx.exe"
+    ]
+  },
+  {
+    "id": "js8call",
+    "name": "JS8Call",
+    "description": "Keyboard messaging using JS8 on amateur bands.",
+    "linux_packages": [
+      "js8call"
+    ],
+    "commands": [
+      "js8call"
+    ],
+    "windows_commands": [
+      "js8call.exe"
+    ]
+  },
+  {
+    "id": "fldigi",
+    "name": "Fldigi",
+    "description": "Multi-mode digital modem and operating application.",
+    "linux_packages": [
+      "fldigi"
+    ],
+    "commands": [
+      "fldigi"
+    ],
+    "windows_commands": [
+      "fldigi.exe"
+    ]
+  },
+  {
+    "id": "flrig",
+    "name": "Flrig",
+    "description": "Cross-platform CAT rig control.",
+    "linux_packages": [
+      "flrig"
+    ],
+    "commands": [
+      "flrig"
+    ],
+    "windows_commands": [
+      "flrig.exe"
+    ]
+  },
+  {
+    "id": "chirp",
+    "name": "CHIRP",
+    "description": "Radio programming software for many transceivers.",
+    "linux_packages": [
+      "chirp",
+      "chirp-next"
+    ],
+    "commands": [
+      "chirp",
+      "chirp-next"
+    ],
+    "windows_commands": [
+      "chirp.exe"
+    ]
+  },
+  {
+    "id": "direwolf",
+    "name": "Dire Wolf",
+    "description": "Software TNC and APRS packet modem.",
+    "linux_packages": [
+      "direwolf"
+    ],
+    "commands": [
+      "direwolf"
+    ],
+    "windows_commands": [
+      "direwolf.exe"
+    ]
+  },
+  {
+    "id": "gpredict",
+    "name": "Gpredict",
+    "description": "Real-time satellite tracking and pass prediction.",
+    "linux_packages": [
+      "gpredict"
+    ],
+    "commands": [
+      "gpredict"
+    ],
+    "windows_commands": [
+      "gpredict.exe"
+    ]
+  },
+  {
+    "id": "cqrlog",
+    "name": "CQRLOG",
+    "description": "Amateur-radio logging application for Linux.",
+    "linux_packages": [
+      "cqrlog"
+    ],
+    "commands": [
+      "cqrlog"
+    ],
+    "windows_commands": []
+  },
+  {
+    "id": "qsstv",
+    "name": "QSSTV",
+    "description": "Slow-scan television and digital image modes.",
+    "linux_packages": [
+      "qsstv"
+    ],
+    "commands": [
+      "qsstv"
+    ],
+    "windows_commands": []
+  },
+  {
+    "id": "gqrx",
+    "name": "Gqrx",
+    "description": "Software-defined radio receiver.",
+    "linux_packages": [
+      "gqrx-sdr",
+      "gqrx"
+    ],
+    "commands": [
+      "gqrx"
+    ],
+    "windows_commands": [
+      "gqrx.exe"
+    ]
+  }
+]

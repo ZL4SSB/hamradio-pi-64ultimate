@@ -10,7 +10,6 @@ os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu")
 import argparse
 import json
 import sys
-from pathlib import Path
 import traceback
 
 from PyQt6.QtCore import QTimer, QUrl
@@ -65,42 +64,8 @@ def main() -> int:
     )
 
     backend = Backend()
-
-    startup_steps = [
-        (8, "Loading station profile"),
-        (18, "Loading application catalogue"),
-        (30, "Checking hardware services"),
-        (42, "Preparing audio devices"),
-        (55, "Starting local propagation server"),
-        (68, "Loading radio dashboards"),
-        (80, "Preparing Station Tools"),
-        (90, "Checking saved preferences"),
-        (100, "Ready"),
-    ]
-    startup_step_index = 0
-
-    def advance_startup():
-        nonlocal startup_step_index
-        if startup_step_index >= len(startup_steps):
-            return
-        progress, stage = startup_steps[startup_step_index]
-        backend.setStartupProgress(progress, stage)
-        startup_step_index += 1
-        if startup_step_index < len(startup_steps):
-            QTimer.singleShot(480, advance_startup)
-
-    QTimer.singleShot(120, advance_startup)
-
-    app.aboutToQuit.connect(
-        lambda: (
-            backend.stopPropagationServer()
-            if sys.platform.startswith("win")
-            else None
-        )
-    )
     engines: list[QQmlApplicationEngine] = []
     splash_engine: QQmlApplicationEngine | None = None
-    main_loaded = False
 
     def load_engine(path, warnings):
         engine = QQmlApplicationEngine()
@@ -135,11 +100,6 @@ def main() -> int:
         app.processEvents()
 
     def load_main():
-        nonlocal main_loaded
-        if main_loaded:
-            return
-        main_loaded = True
-
         warnings: list[str] = []
         qml_path = BASE_DIR / "src" / "qml" / "Main.qml"
 
@@ -179,7 +139,6 @@ def main() -> int:
         if not splash_engine.rootObjects():
             show_error(warnings + [f"Could not load: {splash_path}"])
         else:
-            backend.skipSplashRequested.connect(load_main)
             QTimer.singleShot(5000, load_main)
     else:
         QTimer.singleShot(0, load_main)

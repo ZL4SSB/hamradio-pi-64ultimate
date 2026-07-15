@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO_OWNER="ZL4SSB"
-REPO_NAME="Ham-Radio-Pi-Ultimate"
+REPO_OWNER="zl4ssb"
+REPO_NAME="hamradio-pi-64ultimate"
 BRANCH="main"
-TARGET="$HOME/Ham-Radio-Pi-Ultimate"
+TARGET="$HOME/hamradio-pi-64ultimate"
 
 TMP_DIR="$(mktemp -d)"
 ARCHIVE="$TMP_DIR/project.zip"
@@ -47,31 +47,14 @@ if [ -z "$SOURCE" ] || [ ! -f "$SOURCE/install.sh" ]; then
     exit 1
 fi
 
-PRESERVE_DIR="$TMP_DIR/preserve"
-mkdir -p "$PRESERVE_DIR"
-
 if [ -d "$TARGET" ]; then
-    systemctl --user stop hrpu-propagation.service >/dev/null 2>&1 || true
-
-    for item in         config/settings.json         config/dashboards.json         propagation/config.json
-    do
-        if [ -f "$TARGET/$item" ]; then
-            mkdir -p "$PRESERVE_DIR/$(dirname "$item")"
-            cp "$TARGET/$item" "$PRESERVE_DIR/$item"
-        fi
-    done
-
-    BACKUP="$HOME/Ham-Radio-Pi-Ultimate-backup-$(date +%Y%m%d-%H%M%S)"
+    BACKUP="$HOME/hamradio-pi-64ultimate-backup-$(date +%Y%m%d-%H%M%S)"
     echo "Backing up existing installation to:"
     echo "  $BACKUP"
     mv "$TARGET" "$BACKUP"
 fi
 
 mv "$SOURCE" "$TARGET"
-
-if [ -d "$PRESERVE_DIR" ]; then
-    cp -a "$PRESERVE_DIR/." "$TARGET/" 2>/dev/null || true
-fi
 
 cd "$TARGET"
 chmod +x install.sh install-public.sh src/app.py scripts/*.sh

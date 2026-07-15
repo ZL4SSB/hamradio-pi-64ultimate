@@ -1,10 +1,13 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
 Item {
+    id: page
     property string pageTitle: ""
     property string pageSubtitle: ""
     property var cards: []
+    signal cardClicked(string card)
 
     ColumnLayout {
         anchors.fill: parent
@@ -32,11 +35,18 @@ Item {
             Repeater {
                 model: cards
                 delegate: Rectangle {
+                    id: cardRoot
                     Layout.fillWidth: true
                     implicitHeight: 110
                     radius: 10
                     color: "#10212C"
                     border.color: "#294A5A"
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: page.cardClicked(modelData)
+                    }
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -49,7 +59,7 @@ Item {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: "Connected to the HamRadio-Pi backend and ready for Raspberry Pi integration testing."
+                            text: "Select to open this function or view its current availability."
                             color: "#A7BBC6"
                             wrapMode: Text.WordWrap
                         }

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import shlex
 import shutil
 import socket
 import subprocess
@@ -13,6 +14,14 @@ from datetime import datetime
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, QTimer, pyqtProperty, pyqtSignal, pyqtSlot
+
+from core_services import (
+    CatBroker,
+    DigitalWorkspaceService,
+    LogbookService,
+    RadioStateService,
+    SatelliteRotatorService,
+)
 
 from constants import (
     APP_NAME,
@@ -38,19 +47,26 @@ class Backend(QObject):
     dashboardsChanged = pyqtSignal()
     dashboardSelectionChanged = pyqtSignal()
     propagationChanged = pyqtSignal()
-    propagationServerChanged = pyqtSignal()
+    radioMapChanged = pyqtSignal()
+    radioStateChanged = pyqtSignal()
+    catBrokerChanged = pyqtSignal()
+    digitalChanged = pyqtSignal()
+    logbookChanged = pyqtSignal()
+    satelliteChanged = pyqtSignal()
     toolsChanged = pyqtSignal()
     updateChanged = pyqtSignal()
     helpChanged = pyqtSignal()
-    shackClockChanged = pyqtSignal()
-    timeSyncChanged = pyqtSignal()
-    skipSplashRequested = pyqtSignal()
-    startupProgressChanged = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
 
         self._page = "Dashboard"
+        self._radio_service = RadioStateService()
+        self._cat_broker = CatBroker(self._radio_service)
+        self._digital_service = DigitalWorkspaceService()
+        self._logbook_service = LogbookService(DATA_DIR / 'hrpu-logbook.sqlite3')
+        self._satellite_service = SatelliteRotatorService()
+        self._logbook_rows = self._logbook_service.recent()
         self._notification = "System is ready."
         self._online = False
         self._cpu_temp = "—"
@@ -86,7 +102,6 @@ class Backend(QObject):
         self._preferred_sdr = ""
         self._update_channel = "Stable channel"
         self._backup_before_updates = True
-        self._start_at_login = False
         self._spectrum_peak_hold_default = True
         self._spectrum_peak_decay_default = "Medium"
 
@@ -101,19 +116,6 @@ class Backend(QObject):
 
         self._propagation_loading = False
         self._propagation_status = "Waiting for first update"
-
-        self._dx_cluster_host = ""
-        self._dx_cluster_port = 7300
-        self._dx_cluster_login = ""
-        self._dx_cluster_enabled = False
-        self._propagation_demo_mode = True
-
-        self._propagation_server_status = "Stopped"
-        self._propagation_server_detail = "Server has not been checked."
-        self._propagation_server_last_update = "Never"
-        self._propagation_cluster_status = "Unknown"
-        self._propagation_spot_count = 0
-        self._propagation_process = None
         self._propagation_updated = "Never"
         self._solar_flux = "—"
         self._kp_index = "—"
@@ -123,6 +125,25 @@ class Backend(QObject):
         self._xray_class = "—"
         self._geomagnetic_state = "Unknown"
         self._hf_conditions = []
+        self._map_target = {
+            "name": "Click the map",
+            "bearing": "—",
+            "long_path": "—",
+            "distance": "—",
+            "sunrise": "—",
+            "sunset": "—",
+            "greyline": "—",
+        }
+        self._map_spots = [
+            {"call": "G4ABC", "grid": "IO91", "band": "20 m", "mode": "FT8", "snr": "-12", "source": "DECODED"},
+            {"call": "JA1XYZ", "grid": "PM95", "band": "20 m", "mode": "SSB", "snr": "—", "source": "DX"},
+            {"call": "VK3ABC", "grid": "QF22", "band": "40 m", "mode": "WSPR", "snr": "-18", "source": "WSPR"},
+        ]
+        self._map_demo_mode = True
+        self._vhf_conditions = []
+        self._meteor_status = {}
+        self._beacon_status = {}
+        self._propagation_confidence = []
 
         self._audio_inputs: list[dict] = []
         self._audio_outputs: list[dict] = []
@@ -151,33 +172,13 @@ class Backend(QObject):
         self._update_busy = False
         self._help_status = "Choose a help topic."
 
-        self._startup_progress = 0
-        self._startup_stage = "Preparing HamRadio-Pi Ultimate"
-        self._startup_ready = False
-        self._time_sync_status = "Not checked"
-        self._time_sync_source = "Unknown"
-        self._time_sync_quality = "Unknown"
-        self._gps_status = "Not detected"
-        self._pps_status = "Not detected"
-
-        self._shack_local_time = ""
-        self._shack_utc_time = ""
-        self._shack_local_date = ""
-        self._shack_utc_date = ""
-        self._shack_sunrise = "—"
-        self._shack_sunset = "—"
-        self._shack_daylight = "Unknown"
-        self._shack_bearing = "—"
-        self._shack_distance = "—"
-        self._shack_weather = "Weather source not configured"
-        self._shack_weather_detail = ""
-
         self._load_settings()
         self._load_dashboards()
         self._load_applications()
         self._add_activity("HamRadio-Pi Ultimate started")
         self.refreshSystem()
         self.refreshServices()
+        self.refreshPropagation()
 
         self.system_timer = QTimer(self)
         self.system_timer.timeout.connect(self.refreshSystem)
@@ -187,25 +188,13 @@ class Backend(QObject):
         self.service_timer.timeout.connect(self.refreshServices)
         self.service_timer.start(30000)
 
+        self.propagation_timer = QTimer(self)
+        self.propagation_timer.timeout.connect(self.refreshPropagation)
+        self.propagation_timer.start(300000)
+
         self.audio_meter_timer = QTimer(self)
         self.audio_meter_timer.timeout.connect(self._publish_audio_monitor)
         self.audio_meter_timer.start(50)
-
-        self.shack_clock_timer = QTimer(self)
-        self.shack_clock_timer.timeout.connect(self.refreshShackClock)
-        self.shack_clock_timer.start(1000)
-        self.refreshShackClock()
-
-        self.propagation_server_timer = QTimer(self)
-        self.propagation_server_timer.timeout.connect(
-            self.refreshPropagationServerStatus
-        )
-        self.propagation_server_timer.start(5000)
-
-        QTimer.singleShot(
-            800,
-            self.ensurePropagationServer,
-        )
 
     # --------------------------- Constants ---------------------------
 
@@ -238,6 +227,215 @@ class Backend(QObject):
     @pyqtProperty(bool, notify=systemChanged)
     def online(self) -> bool:
         return self._online
+
+
+    # ------------------------- Unified station core ------------------
+
+    @pyqtProperty("QVariantMap", notify=radioStateChanged)
+    def radioState(self):
+        return self._radio_service.state.to_dict()
+
+    @pyqtProperty("QVariantMap", notify=catBrokerChanged)
+    def catBroker(self):
+        return self._cat_broker.snapshot()
+
+    @pyqtProperty("QVariantMap", notify=digitalChanged)
+    def digitalState(self):
+        return self._digital_service.snapshot()
+
+    @pyqtProperty("QVariantList", notify=logbookChanged)
+    def logbookRows(self):
+        return self._logbook_rows
+
+    @pyqtProperty("QVariantMap", notify=satelliteChanged)
+    def satelliteState(self):
+        return self._satellite_service.snapshot()
+
+    @pyqtSlot(float)
+    def setRadioFrequency(self, frequency_mhz: float) -> None:
+        self._radio_service.set_frequency_mhz(frequency_mhz)
+        self._notification = (
+            f"Radio context changed to "
+            f"{self._radio_service.state.frequency_hz / 1_000_000:.6f} MHz "
+            f"({self._radio_service.state.band})."
+        )
+        self._add_activity("Radio frequency context changed")
+        self.radioStateChanged.emit()
+        self.notificationChanged.emit()
+        self.radioMapChanged.emit()
+
+    @pyqtSlot(str)
+    def setRadioMode(self, mode: str) -> None:
+        self._radio_service.set_mode(mode)
+        self.radioStateChanged.emit()
+        self._add_activity(f"Radio mode changed to {self._radio_service.state.mode}")
+
+    @pyqtSlot(bool)
+    def setRadioPtt(self, active: bool) -> None:
+        self._radio_service.set_ptt(active)
+        self.radioStateChanged.emit()
+        self._add_activity("PTT TX" if active else "PTT RX")
+
+    @pyqtSlot(bool)
+    def setRadioSplit(self, active: bool) -> None:
+        self._radio_service.set_split(active)
+        self.radioStateChanged.emit()
+
+    @pyqtSlot(str, str, str, str, float, int)
+    def saveRadioAudioProfile(
+        self,
+        rx_device: str,
+        tx_device: str,
+        rx_channel: str,
+        tx_channel: str,
+        rx_gain_db: float,
+        tx_level: int,
+    ) -> None:
+        self._radio_service.configure_audio(
+            rx_device,
+            tx_device,
+            rx_channel,
+            tx_channel,
+            rx_gain_db,
+            tx_level,
+        )
+        self._notification = "Radio audio-routing profile updated."
+        self._add_activity("Radio audio-routing profile updated")
+        self.radioStateChanged.emit()
+        self.notificationChanged.emit()
+
+    @pyqtSlot()
+    def probeCatBroker(self) -> None:
+        self._cat_broker.probe()
+        self._radio_service.state.cat_connected = (
+            self._cat_broker.status == "Ready"
+        )
+        self.catBrokerChanged.emit()
+        self.radioStateChanged.emit()
+        self._notification = self._cat_broker.detail
+        self.notificationChanged.emit()
+
+    @pyqtSlot(str)
+    def registerCatClient(self, client_name: str) -> None:
+        self._cat_broker.register_client(client_name)
+        self.catBrokerChanged.emit()
+
+    @pyqtSlot(str)
+    def setDigitalMode(self, mode: str) -> None:
+        if mode in self._digital_service.MODES:
+            self._digital_service.mode = mode
+            self._digital_service.status = f"{mode} workspace selected"
+            self.digitalChanged.emit()
+
+    @pyqtSlot(bool)
+    def setDigitalTxEnabled(self, enabled: bool) -> None:
+        self._digital_service.tx_enabled = bool(enabled)
+        self.digitalChanged.emit()
+
+    @pyqtSlot(bool)
+    def setDigitalAutoSequence(self, enabled: bool) -> None:
+        self._digital_service.auto_sequence = bool(enabled)
+        self.digitalChanged.emit()
+
+    @pyqtSlot()
+    def requestDigitalTune(self) -> None:
+        self._digital_service.status = (
+            "TUNE unavailable — no live HRPU modulator/PTT provider is configured"
+        )
+        self._digital_service.tx_enabled = False
+        self.digitalChanged.emit()
+        self._notification = "Digital TUNE was not started; live transmit provider unavailable."
+        self.notificationChanged.emit()
+
+    @pyqtSlot()
+    def loadDigitalPreview(self) -> None:
+        state = self._digital_service.demo_decode()
+        digital_spots = [
+            {
+                "call": row["call"],
+                "grid": row["grid"],
+                "band": self._radio_service.state.band,
+                "mode": state["mode"],
+                "snr": str(row["snr"]),
+                "source": "DECODED",
+            }
+            for row in state["decoded"]
+        ]
+        retained = [
+            item for item in self._map_spots
+            if item.get("source") != "DECODED"
+        ]
+        self._map_spots = retained + digital_spots
+        self.digitalChanged.emit()
+        self.radioMapChanged.emit()
+        self._notification = "Preview decode activity loaded. This is not live RF decoding."
+        self.notificationChanged.emit()
+
+    @pyqtSlot(str, str, str, str, str)
+    def addQso(
+        self,
+        callsign: str,
+        grid: str,
+        rst_sent: str,
+        rst_received: str,
+        notes: str,
+    ) -> None:
+        try:
+            result = self._logbook_service.add(
+                callsign,
+                grid,
+                self._radio_service.state.frequency_hz,
+                self._digital_service.mode
+                if self._digital_service.mode
+                else self._radio_service.state.mode,
+                rst_sent,
+                rst_received,
+                notes,
+            )
+            self._logbook_rows = self._logbook_service.recent()
+            self._notification = (
+                f"Logged {result['callsign']} on {result['band']} "
+                f"{result['mode']}."
+            )
+            self._add_activity(f"QSO logged: {result['callsign']}")
+            self.logbookChanged.emit()
+            self.notificationChanged.emit()
+        except Exception as exc:
+            self._notification = f"Logbook error: {exc}"
+            self.notificationChanged.emit()
+
+    @pyqtSlot()
+    def exportAdif(self) -> None:
+        try:
+            path = self._logbook_service.export_adif(
+                REPORTS_DIR / "hrpu-logbook.adi"
+            )
+            self._notification = f"ADIF exported to {path}."
+            self._add_activity("Logbook exported to ADIF")
+        except Exception as exc:
+            self._notification = f"ADIF export failed: {exc}"
+        self.notificationChanged.emit()
+
+    @pyqtSlot(str)
+    def selectSatellitePreview(self, target: str) -> None:
+        self._satellite_service.select_preview(target)
+        self._radio_service.state.rotator_azimuth = (
+            self._satellite_service.azimuth
+        )
+        self._radio_service.state.rotator_elevation = (
+            self._satellite_service.elevation
+        )
+        self.satelliteChanged.emit()
+        self.radioStateChanged.emit()
+
+    @pyqtSlot(bool)
+    def setSatelliteTracking(self, active: bool) -> None:
+        self._satellite_service.tracking = False
+        self._satellite_service.status = (
+            "Tracking unavailable — live TLE and rotator providers are not configured"
+            if active else "Tracking stopped"
+        )
+        self.satelliteChanged.emit()
 
     # ----------------------------- System ----------------------------
 
@@ -368,10 +566,6 @@ class Backend(QObject):
     @pyqtProperty(bool, notify=stationChanged)
     def backupBeforeUpdates(self) -> bool:
         return self._backup_before_updates
-
-    @pyqtProperty(bool, notify=stationChanged)
-    def startAtLogin(self) -> bool:
-        return self._start_at_login
 
     @pyqtProperty(bool, notify=stationChanged)
     def spectrumPeakHoldDefault(self) -> bool:
@@ -578,521 +772,6 @@ class Backend(QObject):
     def reportsPath(self) -> str:
         return str(REPORTS_DIR)
 
-
-    # -------------------------- Shack Clock ---------------------------
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackLocalTime(self) -> str:
-        return self._shack_local_time
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackUtcTime(self) -> str:
-        return self._shack_utc_time
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackLocalDate(self) -> str:
-        return self._shack_local_date
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackUtcDate(self) -> str:
-        return self._shack_utc_date
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackSunrise(self) -> str:
-        return self._shack_sunrise
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackSunset(self) -> str:
-        return self._shack_sunset
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackDaylight(self) -> str:
-        return self._shack_daylight
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackWeather(self) -> str:
-        return self._shack_weather
-
-    @pyqtProperty(str, notify=shackClockChanged)
-    def shackWeatherDetail(self) -> str:
-        return self._shack_weather_detail
-
-    @pyqtSlot()
-    def requestSkipSplash(self) -> None:
-        self.skipSplashRequested.emit()
-
-    @pyqtProperty(str, notify=timeSyncChanged)
-    def timeSyncStatus(self) -> str:
-        return self._time_sync_status
-
-    @pyqtProperty(str, notify=timeSyncChanged)
-    def timeSyncSource(self) -> str:
-        return self._time_sync_source
-
-    @pyqtProperty(str, notify=timeSyncChanged)
-    def timeSyncQuality(self) -> str:
-        return self._time_sync_quality
-
-    @pyqtProperty(str, notify=timeSyncChanged)
-    def gpsStatus(self) -> str:
-        return self._gps_status
-
-    @pyqtProperty(str, notify=timeSyncChanged)
-    def ppsStatus(self) -> str:
-        return self._pps_status
-
-
-    @pyqtSlot()
-    def openActivityLog(self) -> None:
-        REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-        path = REPORTS_DIR / "activity.log"
-        lines = [
-            f"{item.get('time', '')}  {item.get('message', '')}"
-            for item in reversed(self._activity)
-        ]
-        path.write_text(
-            "\n".join(lines) + ("\n" if lines else ""),
-            encoding="utf-8",
-        )
-        try:
-            self._open_path(path)
-            self._notification = f"Opened activity log: {path}"
-        except Exception as exc:
-            self._notification = f"Could not open activity log: {exc}"
-        self.notificationChanged.emit()
-
-    @pyqtSlot()
-    def openWpsdProject(self) -> None:
-        webbrowser.open("https://w0chp.radio/wpsd/")
-
-    @pyqtSlot()
-    def openWpsdDownloads(self) -> None:
-        webbrowser.open("https://w0chp.radio/wpsd/")
-
-    @pyqtSlot()
-    def openWpsdManual(self) -> None:
-        webbrowser.open("https://manual.wpsd.radio/")
-
-    @pyqtSlot()
-    def openRaspberryPiImager(self) -> None:
-        webbrowser.open("https://www.raspberrypi.com/software/")
-
-    @pyqtSlot()
-    def openWpsdDashboard(self) -> None:
-        self.setPage("Radio Dashboards")
-
-    @pyqtSlot()
-    def openPropagationBrowser(self) -> None:
-        webbrowser.open("https://solar.w5mmw.net/")
-        self._notification = "Opened W5MMW propagation in the default browser."
-        self._add_activity("W5MMW propagation opened")
-        self.notificationChanged.emit()
-
-    @pyqtSlot()
-    def openLocalWpsd(self) -> None:
-        webbrowser.open("http://wpsd.local/")
-        self._notification = "Opened http://wpsd.local/ in the default browser."
-        self._add_activity("Local WPSD dashboard opened")
-        self.notificationChanged.emit()
-
-
-    @pyqtProperty(str, notify=stationChanged)
-    def dxClusterHost(self) -> str:
-        return self._dx_cluster_host
-
-    @pyqtProperty(int, notify=stationChanged)
-    def dxClusterPort(self) -> int:
-        return self._dx_cluster_port
-
-    @pyqtProperty(str, notify=stationChanged)
-    def dxClusterLogin(self) -> str:
-        return self._dx_cluster_login
-
-    @pyqtProperty(bool, notify=stationChanged)
-    def dxClusterEnabled(self) -> bool:
-        return self._dx_cluster_enabled
-
-    @pyqtProperty(bool, notify=stationChanged)
-    def propagationDemoMode(self) -> bool:
-        return self._propagation_demo_mode
-
-    @pyqtProperty(str, notify=propagationServerChanged)
-    def propagationServerStatus(self) -> str:
-        return self._propagation_server_status
-
-    @pyqtProperty(str, notify=propagationServerChanged)
-    def propagationServerDetail(self) -> str:
-        return self._propagation_server_detail
-
-    @pyqtProperty(str, notify=propagationServerChanged)
-    def propagationServerLastUpdate(self) -> str:
-        return self._propagation_server_last_update
-
-    @pyqtProperty(str, notify=propagationServerChanged)
-    def propagationClusterStatus(self) -> str:
-        return self._propagation_cluster_status
-
-    @pyqtProperty(int, notify=propagationServerChanged)
-    def propagationSpotCount(self) -> int:
-        return self._propagation_spot_count
-
-
-    @pyqtSlot()
-    def ensurePropagationServer(self) -> None:
-        self._sync_propagation_config()
-
-        if self._propagation_endpoint_available():
-            self.refreshPropagationServerStatus()
-            return
-
-        self.startPropagationServer()
-
-    @pyqtSlot()
-    def startPropagationServer(self) -> None:
-        self._sync_propagation_config()
-        self._propagation_server_status = "Stopped"
-        self._propagation_server_detail = "Starting local propagation server…"
-        self.propagationServerChanged.emit()
-
-        try:
-            if platform.system() == "Windows":
-                if (
-                    self._propagation_process is not None
-                    and self._propagation_process.poll() is None
-                ):
-                    self._propagation_server_detail = (
-                        "Propagation server is already running."
-                    )
-                else:
-                    flags = getattr(
-                        subprocess,
-                        "CREATE_NO_WINDOW",
-                        0,
-                    )
-                    self._propagation_process = subprocess.Popen(
-                        [
-                            sys.executable,
-                            str(
-                                BASE_DIR
-                                / "propagation"
-                                / "server.py"
-                            ),
-                        ],
-                        cwd=str(
-                            BASE_DIR / "propagation"
-                        ),
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                        creationflags=flags,
-                    )
-            else:
-                result = subprocess.run(
-                    [
-                        "systemctl",
-                        "--user",
-                        "start",
-                        "hrpu-propagation.service",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=20,
-                )
-
-                if result.returncode != 0:
-                    self._start_propagation_fallback()
-
-            QTimer.singleShot(
-                900,
-                self.refreshPropagationServerStatus,
-            )
-            self._add_activity(
-                "Propagation server start requested"
-            )
-        except Exception as exc:
-            self._propagation_server_status = "Connection Error"
-            self._propagation_server_detail = str(exc)
-            self.propagationServerChanged.emit()
-
-    @pyqtSlot()
-    def stopPropagationServer(self) -> None:
-        try:
-            if platform.system() == "Windows":
-                if (
-                    self._propagation_process is not None
-                    and self._propagation_process.poll() is None
-                ):
-                    self._propagation_process.terminate()
-                    try:
-                        self._propagation_process.wait(
-                            timeout=5,
-                        )
-                    except subprocess.TimeoutExpired:
-                        self._propagation_process.kill()
-                self._propagation_process = None
-            else:
-                subprocess.run(
-                    [
-                        "systemctl",
-                        "--user",
-                        "stop",
-                        "hrpu-propagation.service",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=20,
-                )
-
-                if (
-                    self._propagation_process is not None
-                    and self._propagation_process.poll() is None
-                ):
-                    self._propagation_process.terminate()
-
-                self._propagation_process = None
-
-            self._propagation_server_status = "Stopped"
-            self._propagation_server_detail = (
-                "Propagation server stopped."
-            )
-            self._propagation_server_last_update = (
-                datetime.now().strftime(
-                    "%d %b %Y %H:%M:%S"
-                )
-            )
-            self._add_activity(
-                "Propagation server stopped"
-            )
-        except Exception as exc:
-            self._propagation_server_status = "Connection Error"
-            self._propagation_server_detail = str(exc)
-
-        self.propagationServerChanged.emit()
-
-    @pyqtSlot()
-    def restartPropagationServer(self) -> None:
-        self.stopPropagationServer()
-        QTimer.singleShot(
-            500,
-            self.startPropagationServer,
-        )
-
-    @pyqtSlot()
-    def refreshPropagationServerStatus(self) -> None:
-        try:
-            request = Request(
-                "http://127.0.0.1:8765/api/status",
-                headers={
-                    "User-Agent": (
-                        f"{APP_NAME}/{APP_VERSION}"
-                    ),
-                    "Cache-Control": "no-cache",
-                },
-            )
-
-            with urlopen(
-                request,
-                timeout=2.5,
-            ) as response:
-                status = json.loads(
-                    response.read().decode(
-                        "utf-8"
-                    )
-                )
-
-            self._propagation_server_status = "Running"
-            self._propagation_cluster_status = str(
-                status.get(
-                    "cluster_status",
-                    "Unknown",
-                )
-            )
-            self._propagation_spot_count = int(
-                status.get(
-                    "spot_count",
-                    0,
-                )
-            )
-            last_update = status.get(
-                "last_update",
-                status.get(
-                    "updated",
-                    "",
-                ),
-            )
-            self._propagation_server_last_update = (
-                self._format_iso_datetime(
-                    last_update
-                )
-            )
-
-            if status.get(
-                "cluster_enabled",
-                False,
-            ):
-                self._propagation_server_detail = (
-                    "DX cluster "
-                    + self._propagation_cluster_status
-                    + f" · {self._propagation_spot_count} spots"
-                )
-            elif status.get(
-                "demo_mode",
-                True,
-            ):
-                self._propagation_server_detail = (
-                    "Demo mode · "
-                    f"{self._propagation_spot_count} spots"
-                )
-            else:
-                self._propagation_server_detail = (
-                    "Running without DX-cluster connection."
-                )
-        except Exception as exc:
-            active = self._propagation_process_active()
-
-            if active:
-                self._propagation_server_status = "Connection Error"
-                self._propagation_server_detail = (
-                    "Server process appears active, "
-                    "but the local API did not respond: "
-                    + str(exc)
-                )
-            else:
-                self._propagation_server_status = "Stopped"
-                self._propagation_server_detail = (
-                    "Local propagation server is not running."
-                )
-
-            self._propagation_cluster_status = "Unknown"
-            self._propagation_spot_count = 0
-
-        self.propagationServerChanged.emit()
-
-    def _propagation_endpoint_available(self) -> bool:
-        try:
-            with urlopen(
-                "http://127.0.0.1:8765/api/status",
-                timeout=1.5,
-            ) as response:
-                return response.status == 200
-        except Exception:
-            return False
-
-    def _propagation_process_active(self) -> bool:
-        if (
-            self._propagation_process is not None
-            and self._propagation_process.poll() is None
-        ):
-            return True
-
-        if platform.system() != "Windows":
-            try:
-                result = subprocess.run(
-                    [
-                        "systemctl",
-                        "--user",
-                        "is-active",
-                        "--quiet",
-                        "hrpu-propagation.service",
-                    ],
-                    timeout=5,
-                )
-                return result.returncode == 0
-            except Exception:
-                return False
-
-        return False
-
-    def _start_propagation_fallback(self) -> None:
-        if (
-            self._propagation_process is not None
-            and self._propagation_process.poll() is None
-        ):
-            return
-
-        self._propagation_process = subprocess.Popen(
-            [
-                sys.executable,
-                str(
-                    BASE_DIR
-                    / "propagation"
-                    / "server.py"
-                ),
-            ],
-            cwd=str(
-                BASE_DIR / "propagation"
-            ),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-
-    def _sync_propagation_config(self) -> None:
-        script = (
-            BASE_DIR
-            / "scripts"
-            / "sync-propagation-config.py"
-        )
-
-        try:
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(script),
-                ],
-                cwd=str(BASE_DIR),
-                check=True,
-                timeout=15,
-            )
-        except Exception as exc:
-            self._propagation_server_detail = (
-                "Could not update propagation configuration: "
-                + str(exc)
-            )
-
-    @staticmethod
-    def _format_iso_datetime(value: str) -> str:
-        if not value:
-            return "Never"
-
-        try:
-            parsed = datetime.fromisoformat(
-                value.replace(
-                    "Z",
-                    "+00:00",
-                )
-            )
-            return parsed.astimezone().strftime(
-                "%d %b %Y %H:%M:%S"
-            )
-        except Exception:
-            return str(value)
-
-    @pyqtProperty(int, notify=startupProgressChanged)
-    def startupProgress(self) -> int:
-        return self._startup_progress
-
-    @pyqtProperty(str, notify=startupProgressChanged)
-    def startupStage(self) -> str:
-        return self._startup_stage
-
-    @pyqtProperty(bool, notify=startupProgressChanged)
-    def startupReady(self) -> bool:
-        return self._startup_ready
-
-    @pyqtSlot(int, str)
-    def setStartupProgress(self, value: int, stage: str) -> None:
-        self._startup_progress = max(0, min(100, int(value)))
-        self._startup_stage = stage.strip() or "Loading"
-        self._startup_ready = self._startup_progress >= 100
-        self.startupProgressChanged.emit()
-
-    @pyqtSlot()
-    def completeStartup(self) -> None:
-        self._startup_progress = 100
-        self._startup_stage = "Ready"
-        self._startup_ready = True
-        self.startupProgressChanged.emit()
-
     # ------------------------------ Slots ----------------------------
 
     @pyqtSlot(str)
@@ -1201,6 +880,69 @@ class Backend(QObject):
 
         self.notificationChanged.emit()
 
+    @pyqtSlot(str)
+    def installApplication(self, package: str) -> None:
+        item = next((app for app in self._applications if app.get("package") == package), None)
+        if not item:
+            self.setNotification("Application package was not found in the HRPU catalogue.")
+            return
+        if self._application_is_installed(item):
+            self.setNotification(f"{item['name']} is already installed.")
+            self.refreshApplications()
+            return
+        if platform.system() == "Windows":
+            self.setNotification(
+                f"{item['name']} has no automatic Windows installer in HRPU. "
+                "Open its Help guide for supported installation options."
+            )
+            return
+        terminal = (shutil.which("x-terminal-emulator") or shutil.which("lxterminal")
+                    or shutil.which("gnome-terminal") or shutil.which("xterm"))
+        if not terminal:
+            self.setNotification("No terminal was found. Install the package with apt.")
+            return
+        command = f"sudo apt-get update && sudo apt-get install -y {shlex.quote(package)}; echo; read -r -p 'Press ENTER to close…'"
+        try:
+            if Path(terminal).name == "gnome-terminal":
+                launch = [terminal, "--", "bash", "-lc", command]
+            else:
+                launch = [terminal, "-e", "bash", "-lc", command]
+            subprocess.Popen(launch, start_new_session=True)
+            self.setNotification(f"Installer opened for {item['name']}.")
+            self._add_activity(f"Install requested: {item['name']}")
+            QTimer.singleShot(5000, self.refreshApplications)
+        except Exception as exc:
+            self.setNotification(f"Could not open installer: {exc}")
+
+    @pyqtSlot(str)
+    def openApplicationHelp(self, name: str) -> None:
+        filename = "APP-" + "".join(ch if ch.isalnum() else "-" for ch in name.upper()).strip("-") + ".md"
+        self.openHelpDocument(filename)
+
+    @pyqtSlot(str, str)
+    def runWorkspaceAction(self, workspace: str, action: str) -> None:
+        if workspace == "About":
+            mapping = {
+                "Project Information": "README.md", "Licence": "DEPENDENCIES.md",
+                "GitHub Repository": "github", "Donate": "donate",
+                "Credits": "DEPENDENCIES.md", "System Information": "report",
+            }
+            target = mapping.get(action)
+            if target == "github": self.openGithubProject()
+            elif target == "donate": self.openDonate()
+            elif target == "report": self.createSystemReport()
+            elif target:
+                path = BASE_DIR / target
+                if path.exists(): self._open_path(path)
+            return
+        # WPSD media writing is intentionally not simulated. The control opens
+        # the exact guide and reports that the provider is not configured.
+        self._help_status = f"{action}: open the WPSD guide for requirements and safety steps."
+        self.helpChanged.emit()
+        self._notification = f"{action} requires the WPSD media provider; guide opened."
+        self.notificationChanged.emit()
+        self.openHelpDocument("WPSD-CENTRE.md")
+
     @pyqtSlot(str, str, str, str, str, str)
     def saveStation(
         self,
@@ -1222,26 +964,19 @@ class Backend(QObject):
         })
         self._write_settings(settings)
         self._load_settings()
-        self._sync_propagation_config()
         self.stationChanged.emit()
         self._notification = "Station profile saved."
-        QTimer.singleShot(
-            300,
-            self.restartPropagationServer,
-        )
         self._add_activity("Station profile updated")
         self.notificationChanged.emit()
 
-    @pyqtSlot(
-        str, bool, bool, bool, str, str, str, str,
-        bool, bool, str, bool, str, int, str, bool, bool
-    )
+    @pyqtSlot(str, bool, bool, bool, str, str, str, str, str, bool, bool, str)
     def savePreferences(
         self,
         theme_name: str,
         show_splash: bool,
         auto_scan: bool,
         check_updates: bool,
+        hamclock_url: str,
         default_cat_port: str,
         default_audio_device: str,
         preferred_sdr: str,
@@ -1249,21 +984,14 @@ class Backend(QObject):
         backup_before_updates: bool,
         spectrum_peak_hold_default: bool,
         spectrum_peak_decay_default: str,
-        start_at_login: bool,
-        dx_cluster_host: str,
-        dx_cluster_port: int,
-        dx_cluster_login: str,
-        dx_cluster_enabled: bool,
-        propagation_demo_mode: bool,
     ) -> None:
         settings = self._read_settings()
         settings.update({
-            "theme": theme_name.strip() or "Ultimate Teal",
+            "theme": theme_name.strip() or "Dark",
             "show_splash": bool(show_splash),
             "auto_scan": bool(auto_scan),
             "check_updates": bool(check_updates),
-            "hamclock_url": "",
-            "external_clock_url": "",
+            "hamclock_url": self._normalise_web_url(hamclock_url),
             "default_cat_port": default_cat_port.strip(),
             "default_audio_device": default_audio_device.strip(),
             "preferred_sdr": preferred_sdr.strip(),
@@ -1273,23 +1001,11 @@ class Backend(QObject):
             "spectrum_peak_decay_default": (
                 spectrum_peak_decay_default.strip() or "Medium"
             ),
-            "start_at_login": bool(start_at_login),
-            "dx_cluster_host": dx_cluster_host.strip(),
-            "dx_cluster_port": int(dx_cluster_port),
-            "dx_cluster_login": dx_cluster_login.strip().upper(),
-            "dx_cluster_enabled": bool(dx_cluster_enabled),
-            "propagation_demo_mode": bool(propagation_demo_mode),
         })
         self._write_settings(settings)
-        self._apply_start_at_login(bool(start_at_login))
         self._load_settings()
-        self._sync_propagation_config()
-        QTimer.singleShot(
-            300,
-            self.restartPropagationServer,
-        )
         self.stationChanged.emit()
-        self._notification = "Preferences saved and applied."
+        self._notification = "Preferences saved and reloaded."
         self._add_activity("Preferences updated")
         self.notificationChanged.emit()
 
@@ -1531,6 +1247,7 @@ class Backend(QObject):
                 kp,
                 xray,
             )
+            self._update_radio_awareness(flux, kp)
             self._propagation_updated = datetime.now().strftime(
                 "%d %b %Y %H:%M"
             )
@@ -1745,6 +1462,186 @@ class Backend(QObject):
             })
 
         return results
+
+
+    @pyqtProperty("QVariantMap", notify=radioMapChanged)
+    def mapTarget(self):
+        return self._map_target
+
+    @pyqtProperty("QVariantList", notify=radioMapChanged)
+    def mapSpots(self):
+        return self._map_spots
+
+    @pyqtProperty(bool, notify=radioMapChanged)
+    def mapDemoMode(self) -> bool:
+        return self._map_demo_mode
+
+    @pyqtProperty("QVariantList", notify=propagationChanged)
+    def vhfConditions(self):
+        return self._vhf_conditions
+
+    @pyqtProperty("QVariantMap", notify=propagationChanged)
+    def meteorStatus(self):
+        return self._meteor_status
+
+    @pyqtProperty("QVariantMap", notify=propagationChanged)
+    def beaconStatus(self):
+        return self._beacon_status
+
+    @pyqtProperty("QVariantList", notify=propagationChanged)
+    def propagationConfidence(self):
+        return self._propagation_confidence
+
+    @staticmethod
+    def _grid_to_latlon(locator: str):
+        loc = (locator or "").strip().upper()
+        if len(loc) < 4 or loc.startswith("NOT "):
+            return None
+        try:
+            a = ord(loc[0]) - 65
+            bb = ord(loc[1]) - 65
+            c = int(loc[2])
+            d = int(loc[3])
+            if not (0 <= a <= 17 and 0 <= bb <= 17):
+                return None
+            lon = -180.0 + a * 20.0 + c * 2.0 + 1.0
+            lat = -90.0 + bb * 10.0 + d + 0.5
+            if len(loc) >= 6:
+                e = ord(loc[4]) - 65
+                f = ord(loc[5]) - 65
+                if 0 <= e < 24 and 0 <= f < 24:
+                    lon = -180.0 + a * 20.0 + c * 2.0 + e / 12.0 + 1.0 / 24.0
+                    lat = -90.0 + bb * 10.0 + d + f / 24.0 + 1.0 / 48.0
+            return lat, lon
+        except Exception:
+            return None
+
+    @staticmethod
+    def _bearing_distance(lat1, lon1, lat2, lon2):
+        import math
+        p1 = math.radians(lat1)
+        p2 = math.radians(lat2)
+        dl = math.radians(lon2 - lon1)
+        y = math.sin(dl) * math.cos(p2)
+        x = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl)
+        bearing = (math.degrees(math.atan2(y, x)) + 360.0) % 360.0
+        aa = math.sin((p2-p1)/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+        distance = 6371.0 * 2.0 * math.atan2(math.sqrt(aa), math.sqrt(max(0.0, 1-aa)))
+        return bearing, distance
+
+    @staticmethod
+    def _sun_times_utc(lat, lon, when=None):
+        import math
+        when = when or datetime.utcnow()
+        day = when.timetuple().tm_yday
+        gamma = 2.0 * math.pi / 365.0 * (day - 1)
+        decl = (
+            0.006918 - 0.399912*math.cos(gamma) + 0.070257*math.sin(gamma)
+            - 0.006758*math.cos(2*gamma) + 0.000907*math.sin(2*gamma)
+            - 0.002697*math.cos(3*gamma) + 0.00148*math.sin(3*gamma)
+        )
+        eqtime = 229.18 * (
+            0.000075 + 0.001868*math.cos(gamma) - 0.032077*math.sin(gamma)
+            - 0.014615*math.cos(2*gamma) - 0.040849*math.sin(2*gamma)
+        )
+        latr = math.radians(max(-89.8, min(89.8, lat)))
+        zenith = math.radians(90.833)
+        cos_ha = (math.cos(zenith)/(math.cos(latr)*math.cos(decl))
+                  - math.tan(latr)*math.tan(decl))
+        if cos_ha < -1 or cos_ha > 1:
+            return "Polar", "Polar", "Seasonal"
+        ha = math.degrees(math.acos(cos_ha))
+        noon = 720 - 4*lon - eqtime
+        rise = noon - 4*ha
+        setting = noon + 4*ha
+        def fmt(minutes):
+            minutes %= 1440
+            return f"{int(minutes//60):02d}:{int(minutes%60):02d} UTC"
+        return fmt(rise), fmt(setting), f"{fmt(rise-24)}–{fmt(rise+24)}"
+
+    @pyqtSlot(float, float)
+    def selectMapTarget(self, lat: float, lon: float) -> None:
+        home = self._grid_to_latlon(self._locator)
+        if home is None:
+            self._map_target = {
+                "name": f"{lat:.2f}°, {lon:.2f}°",
+                "bearing": "Set station locator",
+                "long_path": "—",
+                "distance": "—",
+                "sunrise": "—",
+                "sunset": "—",
+                "greyline": "—",
+            }
+        else:
+            bearing, distance = self._bearing_distance(home[0], home[1], lat, lon)
+            sunrise, sunset, greyline = self._sun_times_utc(lat, lon)
+            self._map_target = {
+                "name": f"{lat:.2f}°, {lon:.2f}°",
+                "bearing": f"{bearing:.0f}°",
+                "long_path": f"{(bearing + 180) % 360:.0f}°",
+                "distance": f"{distance:,.0f} km",
+                "sunrise": sunrise,
+                "sunset": sunset,
+                "greyline": greyline,
+            }
+        self.radioMapChanged.emit()
+
+    def _update_radio_awareness(self, flux, kp):
+        now = datetime.utcnow()
+        showers = [
+            ("Quadrantids", 1, 3, 120), ("Lyrids", 4, 22, 18),
+            ("Eta Aquariids", 5, 6, 50), ("Perseids", 8, 12, 100),
+            ("Orionids", 10, 21, 20), ("Leonids", 11, 17, 15),
+            ("Geminids", 12, 14, 120), ("Ursids", 12, 22, 10),
+        ]
+        def day_distance(month, day):
+            target = datetime(now.year, month, day)
+            return abs((target.date() - now.date()).days)
+        shower = min(showers, key=lambda x: day_distance(x[1], x[2]))
+        days = day_distance(shower[1], shower[2])
+        state = "ACTIVE / PEAK" if days <= 1 else "APPROACHING" if days <= 7 else "QUIET"
+        self._meteor_status = {
+            "name": shower[0], "state": state, "peak": f"{shower[2]:02d}/{shower[1]:02d}",
+            "zhr": str(shower[3]), "detail": "144 MHz meteor-scatter opportunity" if days <= 7 else f"{days} days from nearest major peak"
+        }
+
+        kp_value = kp if kp is not None else 3.0
+        self._vhf_conditions = [
+            {"name": "Aurora", "state": "HIGH" if kp_value >= 6 else "MODERATE" if kp_value >= 4 else "LOW"},
+            {"name": "Meteor", "state": state},
+            {"name": "Sporadic-E", "state": "SEASONAL / CHECK 6 m"},
+            {"name": "Tropo", "state": "LOCAL WEATHER DEPENDENT"},
+        ]
+
+        beacons = [
+            "4U1UN", "VE8AT", "W6WX", "KH6WO", "ZL6B",
+            "VK6RBP", "JA2IGY", "RR9O", "VR2B", "4S7B",
+            "ZS6DN", "5Z4B", "4X6TU", "OH2B", "CS3B",
+            "LU4AA", "OA4B", "YV5B",
+        ]
+        slot = int(now.timestamp() // 10) % len(beacons)
+        self._beacon_status = {
+            "current": beacons[slot],
+            "next": beacons[(slot + 1) % len(beacons)],
+            "seconds": str(10 - (now.second % 10)),
+            "bands": "14.100 • 18.110 • 21.150 • 24.930 • 28.200 MHz",
+        }
+
+        flux_value = flux if flux is not None else 100.0
+        for item in self._hf_conditions:
+            score = 45
+            if item["condition"] == "Excellent": score = 88
+            elif item["condition"] == "Good": score = 76
+            elif item["condition"] == "Fair": score = 58
+            score += 4 if flux_value >= 150 and item["band"] in ("20 m","17 m","15 m","10 m") else 0
+            self._propagation_confidence.append({
+                "band": item["band"],
+                "confidence": min(96, score),
+                "summary": "MODEL + OBSERVATION FRAMEWORK",
+            })
+        self._propagation_confidence = self._propagation_confidence[-len(self._hf_conditions):]
+        self.propagationChanged.emit()
+        self.radioMapChanged.emit()
 
     @pyqtSlot(int)
     def selectDashboard(self, index: int) -> None:
@@ -2536,158 +2433,6 @@ class Backend(QObject):
         self.toolsChanged.emit()
 
 
-
-    @pyqtSlot()
-    def refreshShackClock(self) -> None:
-        from datetime import datetime, timezone
-        import math
-
-        local_now = datetime.now().astimezone()
-        utc_now = datetime.now(timezone.utc)
-
-        self._shack_local_time = local_now.strftime("%H:%M:%S")
-        self._shack_utc_time = utc_now.strftime("%H:%M:%S")
-        self._shack_local_date = local_now.strftime("%A, %d %B %Y")
-        self._shack_utc_date = utc_now.strftime("%d %B %Y UTC")
-
-        latitude, longitude = self._locator_to_lat_lon(self._locator)
-        if latitude is not None and longitude is not None:
-            sunrise, sunset = self._calculate_sun_times(
-                local_now.date(),
-                latitude,
-                longitude,
-                local_now.utcoffset().total_seconds() / 3600.0,
-            )
-            self._shack_sunrise = sunrise
-            self._shack_sunset = sunset
-
-            try:
-                sunrise_dt = datetime.strptime(
-                    f"{local_now.date()} {sunrise}",
-                    "%Y-%m-%d %H:%M",
-                ).replace(tzinfo=local_now.tzinfo)
-                sunset_dt = datetime.strptime(
-                    f"{local_now.date()} {sunset}",
-                    "%Y-%m-%d %H:%M",
-                ).replace(tzinfo=local_now.tzinfo)
-                self._shack_daylight = (
-                    "Daylight"
-                    if sunrise_dt <= local_now <= sunset_dt
-                    else "Night"
-                )
-            except Exception:
-                self._shack_daylight = "Unknown"
-        else:
-            self._shack_sunrise = "Set station locator"
-            self._shack_sunset = "Set station locator"
-            self._shack_daylight = "Unknown"
-
-        self.shackClockChanged.emit()
-
-    @pyqtSlot()
-    def openExternalClock(self) -> None:
-        self.openHamClock()
-
-    @staticmethod
-    def _locator_to_lat_lon(locator: str):
-        locator = (locator or "").strip().upper()
-        if len(locator) < 4:
-            return None, None
-
-        try:
-            lon = (ord(locator[0]) - ord("A")) * 20 - 180
-            lat = (ord(locator[1]) - ord("A")) * 10 - 90
-            lon += int(locator[2]) * 2
-            lat += int(locator[3])
-
-            if len(locator) >= 6:
-                lon += (ord(locator[4]) - ord("A")) * (5 / 60)
-                lat += (ord(locator[5]) - ord("A")) * (2.5 / 60)
-                lon += 2.5 / 60
-                lat += 1.25 / 60
-            else:
-                lon += 1.0
-                lat += 0.5
-
-            return lat, lon
-        except Exception:
-            return None, None
-
-    @staticmethod
-    def _calculate_sun_times(date_value, latitude, longitude, utc_offset):
-        import math
-        from datetime import datetime, timedelta
-
-        def calc(is_sunrise: bool):
-            day = date_value.timetuple().tm_yday
-            lng_hour = longitude / 15.0
-            approximate = day + (
-                (6 - lng_hour) / 24.0
-                if is_sunrise
-                else (18 - lng_hour) / 24.0
-            )
-
-            mean_anomaly = (0.9856 * approximate) - 3.289
-            true_long = (
-                mean_anomaly
-                + 1.916 * math.sin(math.radians(mean_anomaly))
-                + 0.020 * math.sin(math.radians(2 * mean_anomaly))
-                + 282.634
-            ) % 360
-
-            right_ascension = math.degrees(
-                math.atan(0.91764 * math.tan(math.radians(true_long)))
-            ) % 360
-
-            l_quadrant = math.floor(true_long / 90) * 90
-            ra_quadrant = math.floor(right_ascension / 90) * 90
-            right_ascension = (
-                right_ascension + (l_quadrant - ra_quadrant)
-            ) / 15.0
-
-            sin_dec = 0.39782 * math.sin(math.radians(true_long))
-            cos_dec = math.cos(math.asin(sin_dec))
-            zenith = 90.833
-
-            cos_h = (
-                math.cos(math.radians(zenith))
-                - sin_dec * math.sin(math.radians(latitude))
-            ) / (
-                cos_dec * math.cos(math.radians(latitude))
-            )
-
-            if cos_h > 1 or cos_h < -1:
-                return None
-
-            if is_sunrise:
-                hour_angle = 360 - math.degrees(math.acos(cos_h))
-            else:
-                hour_angle = math.degrees(math.acos(cos_h))
-
-            hour_angle /= 15.0
-
-            local_mean_time = (
-                hour_angle
-                + right_ascension
-                - (0.06571 * approximate)
-                - 6.622
-            )
-
-            utc_hour = (local_mean_time - lng_hour) % 24
-            local_hour = (utc_hour + utc_offset) % 24
-
-            hours = int(local_hour)
-            minutes = int(round((local_hour - hours) * 60))
-            if minutes >= 60:
-                hours = (hours + 1) % 24
-                minutes = 0
-
-            return f"{hours:02d}:{minutes:02d}"
-
-        sunrise = calc(True)
-        sunset = calc(False)
-        return sunrise or "No sunrise", sunset or "No sunset"
-
     # --------------------- Preferences and Help Slots -----------------
 
     @pyqtSlot()
@@ -2810,70 +2555,6 @@ class Backend(QObject):
         self._add_activity("Support bundle created")
         return str(bundle)
 
-
-    def _apply_start_at_login(self, enabled: bool) -> None:
-        try:
-            if platform.system() == "Windows":
-                startup_dir = Path(
-                    os.environ.get(
-                        "APPDATA",
-                        str(Path.home() / "AppData/Roaming"),
-                    )
-                ) / "Microsoft/Windows/Start Menu/Programs/Startup"
-                startup_dir.mkdir(parents=True, exist_ok=True)
-                shortcut = startup_dir / "HamRadio-Pi Ultimate.lnk"
-
-                if enabled:
-                    launcher = BASE_DIR / "Start-HamRadio-Pi-Ultimate.bat"
-                    shortcut_ps = str(shortcut).replace("'", "''")
-                    launcher_ps = str(launcher).replace("'", "''")
-                    base_dir_ps = str(BASE_DIR).replace("'", "''")
-                    script = (
-                        "$s=(New-Object -COM WScript.Shell).CreateShortcut("
-                        f"'{shortcut_ps}');"
-                        f"$s.TargetPath='{launcher_ps}';"
-                        f"$s.WorkingDirectory='{base_dir_ps}';"
-                        "$s.Description='HamRadio-Pi Ultimate';"
-                        "$s.Save()"
-                    )
-                    subprocess.run(
-                        [
-                            "powershell.exe",
-                            "-NoProfile",
-                            "-ExecutionPolicy",
-                            "Bypass",
-                            "-Command",
-                            script,
-                        ],
-                        check=True,
-                        timeout=20,
-                    )
-                else:
-                    shortcut.unlink(missing_ok=True)
-            else:
-                autostart_dir = Path.home() / ".config/autostart"
-                autostart_dir.mkdir(parents=True, exist_ok=True)
-                desktop_file = autostart_dir / "hamradio-pi-ultimate.desktop"
-
-                if enabled:
-                    launcher = Path.home() / ".local/bin/hamradio-pi-ultimate"
-                    desktop_file.write_text(
-                        "[Desktop Entry]\n"
-                        "Type=Application\n"
-                        "Name=HamRadio-Pi Ultimate\n"
-                        f"Exec={launcher}\n"
-                        "Icon=hamradio-pi-ultimate\n"
-                        "Terminal=false\n"
-                        "X-GNOME-Autostart-enabled=true\n",
-                        encoding="utf-8",
-                    )
-                    desktop_file.chmod(0o755)
-                else:
-                    desktop_file.unlink(missing_ok=True)
-        except Exception as exc:
-            self._notification = f"Could not update start-at-login setting: {exc}"
-            self.notificationChanged.emit()
-
     def _open_path(self, path: Path) -> None:
         path = path.resolve()
 
@@ -2886,126 +2567,6 @@ class Backend(QObject):
             if not opener:
                 raise RuntimeError("xdg-open is not installed.")
             subprocess.Popen([opener, str(path)], start_new_session=True)
-
-    @pyqtSlot()
-    def checkTimeSync(self) -> None:
-        self._time_sync_status = "Checking…"
-        self.timeSyncChanged.emit()
-        self._run_in_thread(self._check_time_sync_worker)
-
-    @pyqtSlot()
-    def syncTimeNow(self) -> None:
-        try:
-            if platform.system() == "Windows":
-                result = subprocess.run(
-                    ["w32tm", "/resync"],
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                )
-                self._time_sync_status = (
-                    "Resynchronisation requested"
-                    if result.returncode == 0
-                    else "Windows Time resync failed"
-                )
-            else:
-                if shutil.which("timedatectl"):
-                    subprocess.run(
-                        ["sudo", "timedatectl", "set-ntp", "true"],
-                        capture_output=True,
-                        text=True,
-                        timeout=30,
-                    )
-                    self._time_sync_status = "Network time enabled"
-                elif shutil.which("chronyc"):
-                    subprocess.run(
-                        ["sudo", "chronyc", "makestep"],
-                        capture_output=True,
-                        text=True,
-                        timeout=30,
-                    )
-                    self._time_sync_status = "Chrony sync requested"
-                else:
-                    self._time_sync_status = "No supported time service found"
-        except Exception as exc:
-            self._time_sync_status = f"Sync failed: {exc}"
-        self.timeSyncChanged.emit()
-        QTimer.singleShot(1200, self.checkTimeSync)
-
-    def _check_time_sync_worker(self) -> None:
-        try:
-            if platform.system() == "Windows":
-                result = subprocess.run(
-                    ["w32tm", "/query", "/status"],
-                    capture_output=True,
-                    text=True,
-                    timeout=20,
-                )
-                output = result.stdout or ""
-                self._time_sync_status = (
-                    "Synchronised" if result.returncode == 0 else "Not synchronised"
-                )
-                self._time_sync_source = "Windows Time"
-                for line in output.splitlines():
-                    if line.lower().startswith("source:"):
-                        self._time_sync_source = line.split(":", 1)[1].strip()
-                        break
-                self._time_sync_quality = (
-                    "Good for digital modes"
-                    if result.returncode == 0
-                    else "Needs attention"
-                )
-                self._gps_status = "USB GPS scan available under Hardware"
-                self._pps_status = "Not detected"
-            else:
-                synced = False
-                source = "System clock"
-                if shutil.which("timedatectl"):
-                    result = subprocess.run(
-                        ["timedatectl", "show"],
-                        capture_output=True,
-                        text=True,
-                        timeout=20,
-                    )
-                    values = {}
-                    for line in result.stdout.splitlines():
-                        if "=" in line:
-                            key, value = line.split("=", 1)
-                            values[key] = value
-                    synced = values.get("NTPSynchronized", "no").lower() == "yes"
-                    source = (
-                        "Network NTP"
-                        if values.get("NTP", "no").lower() == "yes"
-                        else "System clock"
-                    )
-                elif shutil.which("chronyc"):
-                    result = subprocess.run(
-                        ["chronyc", "tracking"],
-                        capture_output=True,
-                        text=True,
-                        timeout=20,
-                    )
-                    synced = result.returncode == 0
-                    source = "Chrony"
-
-                self._time_sync_status = "Synchronised" if synced else "Not synchronised"
-                self._time_sync_source = source
-                self._time_sync_quality = (
-                    "Good for digital modes" if synced else "Needs attention"
-                )
-                self._gps_status = (
-                    "Detected"
-                    if shutil.which("gpspipe")
-                    else "Not detected"
-                )
-                self._pps_status = (
-                    "Detected"
-                    if Path("/dev/pps0").exists()
-                    else "Not detected"
-                )
-        except Exception as exc:
-            self._time_sync_status = f"Check failed: {exc}"
-        self.timeSyncChanged.emit()
 
     # ----------------------------- Helpers ---------------------------
 
@@ -3078,17 +2639,16 @@ class Backend(QObject):
         self._qth = settings.get("qth", "")
         self._country = settings.get("country", "")
         self._dmr_id = settings.get("dmr_id", "")
-        self._theme = settings.get("theme", "Ultimate Teal")
+        self._theme = settings.get("theme", "Dark")
         self._show_splash = settings.get("show_splash", True)
         self._auto_scan = settings.get("auto_scan", False)
         self._check_updates = settings.get("check_updates", True)
-        self._hamclock_url = ""
+        self._hamclock_url = self._normalise_web_url(settings.get("hamclock_url", ""))
         self._default_cat_port = settings.get("default_cat_port", "")
         self._default_audio_device = settings.get("default_audio_device", "")
         self._preferred_sdr = settings.get("preferred_sdr", "")
         self._update_channel = settings.get("update_channel", "Stable channel")
         self._backup_before_updates = settings.get("backup_before_updates", True)
-        self._start_at_login = settings.get("start_at_login", False)
         self._spectrum_peak_hold_default = settings.get(
             "spectrum_peak_hold_default",
             True,
@@ -3097,39 +2657,157 @@ class Backend(QObject):
             "spectrum_peak_decay_default",
             "Medium",
         )
-        self._dx_cluster_host = str(
-            settings.get(
-                "dx_cluster_host",
-                "",
-            )
+
+
+    @pyqtSlot()
+    def refreshApplications(self) -> None:
+        self._load_applications()
+        installed_count = sum(
+            1 for item in self._applications if item.get("installed")
         )
-        try:
-            self._dx_cluster_port = int(
-                settings.get(
-                    "dx_cluster_port",
-                    7300,
+        self._notification = (
+            f"Application check complete: {installed_count} installed."
+        )
+        self._add_activity(
+            f"Applications checked: {installed_count} installed"
+        )
+        self.applicationsChanged.emit()
+        self.notificationChanged.emit()
+
+    def _application_is_installed(self, item: dict) -> bool:
+        command = item.get("command", "")
+        if command and shutil.which(command):
+            return True
+
+        package = item.get("package", "")
+        if package and platform.system() != "Windows":
+            try:
+                result = subprocess.run(
+                    ["dpkg-query", "-W", "-f=${Status}", package],
+                    capture_output=True,
+                    text=True,
+                    timeout=6,
                 )
-            )
-        except (TypeError, ValueError):
-            self._dx_cluster_port = 7300
-        self._dx_cluster_login = str(
-            settings.get(
-                "dx_cluster_login",
-                "",
-            )
+                if (
+                    result.returncode == 0
+                    and "install ok installed" in result.stdout
+                ):
+                    return True
+            except Exception:
+                pass
+
+        if platform.system() == "Windows":
+            name = str(item.get("name", "")).lower()
+            roots = [
+                Path(os.environ.get("ProgramFiles", "")),
+                Path(os.environ.get("ProgramFiles(x86)", "")),
+                Path(os.environ.get("LOCALAPPDATA", "")) / "Programs",
+            ]
+            for root_path in roots:
+                if not root_path.exists():
+                    continue
+                try:
+                    if any(
+                        name in child.name.lower()
+                        for child in root_path.iterdir()
+                    ):
+                        return True
+                except Exception:
+                    continue
+
+        return False
+
+    @pyqtSlot(str)
+    def removeApplication(self, package: str) -> None:
+        item = next(
+            (
+                app for app in self._applications
+                if app.get("package") == package
+            ),
+            None,
         )
-        self._dx_cluster_enabled = bool(
-            settings.get(
-                "dx_cluster_enabled",
-                False,
+        if not item:
+            self.setNotification("Application entry was not found.")
+            return
+
+        if not self._application_is_installed(item):
+            self.setNotification(
+                f"{item.get('name', package)} is not installed."
             )
-        )
-        self._propagation_demo_mode = bool(
-            settings.get(
-                "propagation_demo_mode",
-                True,
+            self.refreshApplications()
+            return
+
+        if platform.system() == "Windows":
+            safe_name = str(item.get("name", "")).replace("'", "''")
+            script = (
+                "$apps=@("
+                "Get-ItemProperty "
+                "'HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' "
+                "-ErrorAction SilentlyContinue;"
+                "Get-ItemProperty "
+                "'HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' "
+                "-ErrorAction SilentlyContinue;"
+                "Get-ItemProperty "
+                "'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' "
+                "-ErrorAction SilentlyContinue"
+                ");"
+                f"$app=$apps|Where-Object{{$_.DisplayName -like '*{safe_name}*'}}"
+                "|Select-Object -First 1;"
+                "if($app -and $app.UninstallString){"
+                "Start-Process 'cmd.exe' "
+                "-ArgumentList '/c',$app.UninstallString -Verb RunAs"
+                "}else{"
+                f"Write-Host 'No registered uninstaller found for {safe_name}';"
+                "Read-Host 'Press Enter to close'"
+                "}"
             )
+            try:
+                subprocess.Popen([
+                    "powershell",
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    script,
+                ])
+                self.setNotification(
+                    f"Windows uninstaller requested for {item['name']}."
+                )
+                QTimer.singleShot(3000, self.refreshApplications)
+            except Exception as exc:
+                self.setNotification(f"Remove failed: {exc}")
+            return
+
+        command = ["sudo", "apt", "remove", "--autoremove", package]
+        quoted = " ".join(shlex.quote(part) for part in command)
+        shell_cmd = f"{quoted}; echo; read -p 'Press Enter to close…'"
+
+        candidates = [
+            ["x-terminal-emulator", "-e", "bash", "-lc", shell_cmd],
+            ["lxterminal", "-e", f"bash -lc {shlex.quote(shell_cmd)}"],
+            ["gnome-terminal", "--", "bash", "-lc", shell_cmd],
+            ["xterm", "-T", f"Remove {item['name']}", "-e", "bash", "-lc", shell_cmd],
+        ]
+        launch = next(
+            (candidate for candidate in candidates if shutil.which(candidate[0])),
+            None,
         )
+
+        if launch is None:
+            self.setNotification(
+                "No terminal application was found for apt removal."
+            )
+            return
+
+        try:
+            subprocess.Popen(launch)
+            self._add_activity(f"Remove requested: {item['name']}")
+            self.setNotification(
+                f"Removal opened for {item['name']}. Confirm the apt prompt."
+            )
+            QTimer.singleShot(3000, self.refreshApplications)
+        except Exception as exc:
+            self.setNotification(f"Remove failed: {exc}")
 
     def _load_applications(self) -> None:
         try:
@@ -3142,7 +2820,7 @@ class Backend(QObject):
         self._applications = [
             {
                 **item,
-                "installed": shutil.which(item.get("command", "")) is not None,
+                "installed": self._application_is_installed(item),
             }
             for item in values
         ]

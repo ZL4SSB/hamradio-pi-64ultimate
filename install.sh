@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="HamRadio-Pi Ultimate"
-APP_VERSION="1.2.0"
+APP_VERSION="4.7.1"
 
 APP_DIR="$HOME/.local/share/applications"
 ICON_DIR="$HOME/.local/share/icons/hicolor/256x256/apps"
@@ -122,10 +122,6 @@ install_available_packages \
     python3-sounddevice \
     python3-numpy \
     portaudio19-dev \
-    chrony \
-    gpsd \
-    gpsd-clients \
-    pps-tools \
     xterm
 
 # PolicyKit changed package names between Debian releases. It is optional,
@@ -166,14 +162,9 @@ mkdir -p "$APP_DIR" "$ICON_DIR" "$BIN_DIR"
 cat > "$BIN_DIR/hamradio-pi-ultimate" <<EOF
 #!/usr/bin/env bash
 export QT_QUICK_CONTROLS_STYLE=Basic
-export QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu"
 exec python3 "$ROOT/src/app.py" "\$@"
 EOF
 chmod +x "$BIN_DIR/hamradio-pi-ultimate"
-
-cp \
-    "$ROOT/assets/branding/hamradio-pi-ultimate.png" \
-    "$ICON_DIR/hamradio-pi-ultimate.png"
 
 cat > "$APP_DIR/hamradio-pi-ultimate.desktop" <<EOF
 [Desktop Entry]
@@ -188,97 +179,15 @@ StartupNotify=true
 EOF
 chmod +x "$APP_DIR/hamradio-pi-ultimate.desktop"
 
-# Create the Ham Radio menu category if the desktop supports menu merging.
-MENU_DIR="$HOME/.config/menus/applications-merged"
-DIRECTORY_DIR="$HOME/.local/share/desktop-directories"
-mkdir -p "$MENU_DIR" "$DIRECTORY_DIR"
-
-cat > "$DIRECTORY_DIR/hamradio.directory" <<EOF
-[Desktop Entry]
-Type=Directory
-Name=Ham Radio
-Comment=Amateur radio applications
-Icon=hamradio-pi-ultimate
-EOF
-
-cat > "$MENU_DIR/hamradio.menu" <<EOF
-<Menu>
-  <Name>Applications</Name>
-  <Menu>
-    <Name>HamRadio</Name>
-    <Directory>hamradio.directory</Directory>
-    <Include>
-      <Category>HamRadio</Category>
-    </Include>
-  </Menu>
-</Menu>
-EOF
-
-CREATE_DESKTOP="yes"
-LAUNCH_AFTER="yes"
-
-if [ -r /dev/tty ]; then
-    printf "Create a desktop shortcut? [Y/n]: " > /dev/tty
-    read -r answer < /dev/tty || answer=""
-    case "${answer:-Y}" in
-        n|N|no|NO) CREATE_DESKTOP="no" ;;
-    esac
-
-    printf "Launch HamRadio-Pi Ultimate after installation? [Y/n]: " > /dev/tty
-    read -r answer < /dev/tty || answer=""
-    case "${answer:-Y}" in
-        n|N|no|NO) LAUNCH_AFTER="no" ;;
-    esac
-fi
-
-if [ "$CREATE_DESKTOP" = "yes" ]; then
-    DESKTOP_DIR="$HOME/Desktop"
-    mkdir -p "$DESKTOP_DIR"
-    cp \
-        "$APP_DIR/hamradio-pi-ultimate.desktop" \
-        "$DESKTOP_DIR/HamRadio-Pi-Ultimate.desktop"
-    chmod +x "$DESKTOP_DIR/HamRadio-Pi-Ultimate.desktop"
-
-    # Mark trusted where supported.
-    if command -v gio >/dev/null 2>&1; then
-        gio set \
-            "$DESKTOP_DIR/HamRadio-Pi-Ultimate.desktop" \
-            metadata::trusted true >/dev/null 2>&1 || true
-    fi
-fi
+cp \
+    "$ROOT/assets/branding/hamradio-pi-256.png" \
+    "$ICON_DIR/hamradio-pi-ultimate.png"
 
 if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database "$APP_DIR" || true
 fi
 
-ok "Desktop shortcut, Ham Radio menu entry and command launcher created"
-
-step "Installing local propagation service"
-
-python3 "$ROOT/scripts/sync-propagation-config.py"
-
-USER_SYSTEMD_DIR="$HOME/.config/systemd/user"
-USER_SERVICE="$USER_SYSTEMD_DIR/hrpu-propagation.service"
-mkdir -p "$USER_SYSTEMD_DIR"
-
-sed \
-    "s|__PROPAGATION_DIR__|$ROOT/propagation|g" \
-    "$ROOT/propagation/hrpu-propagation.service.template" \
-    > "$USER_SERVICE"
-
-if command -v systemctl >/dev/null 2>&1; then
-    systemctl --user daemon-reload || true
-    systemctl --user enable --now hrpu-propagation.service || \
-        warn "Could not enable the user propagation service; HRPU will start it directly."
-
-    if command -v loginctl >/dev/null 2>&1; then
-        sudo loginctl enable-linger "$USER" >/dev/null 2>&1 || true
-    fi
-else
-    warn "systemctl is unavailable; HRPU will start propagation directly."
-fi
-
-ok "Local propagation module installed at http://127.0.0.1:8765"
+ok "Desktop menu and command launcher created"
 
 step "Running automatic application self-test"
 

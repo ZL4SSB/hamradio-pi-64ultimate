@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-INSTALLER_URL="https://raw.githubusercontent.com/ZL4SSB/Ham-Radio-Pi-Ultimate/main/install-public.sh"
+INSTALLER_URL="https://raw.githubusercontent.com/zl4ssb/hamradio-pi-64ultimate/main/install-public.sh"
 TMP_INSTALLER="$(mktemp)"
 
 cleanup() {
